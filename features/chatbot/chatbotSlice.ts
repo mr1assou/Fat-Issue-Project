@@ -23,9 +23,10 @@ interface ChatbotState {
   stage: ChatStage
   planType: PlanType
   messages: Message[]
-  userAnswers: UserAnswers
+  userAnswers: Record<string, string> // Changed type
   isPaid: boolean
   isModalOpen: boolean
+  isCheckoutModalOpen: boolean // Added
   questionStep: number
   dailyCalories: number | null
 }
@@ -37,6 +38,7 @@ const initialState: ChatbotState = {
   userAnswers: {},
   isPaid: false,
   isModalOpen: false,
+  isCheckoutModalOpen: false, // Added
   questionStep: 0,
   dailyCalories: null,
 }
@@ -67,6 +69,12 @@ const chatbotSlice = createSlice({
     setUserAnswer: (state, action: PayloadAction<{ key: keyof UserAnswers; value: string }>) => {
       state.userAnswers[action.payload.key] = action.payload.value
     },
+    /** Remove stored answers (e.g. funnel “back” clears forward steps). */
+    clearUserAnswerKeys: (state, action: PayloadAction<string[]>) => {
+      for (const k of action.payload) {
+        delete state.userAnswers[k]
+      }
+    },
     nextQuestion: (state) => {
       state.questionStep += 1
     },
@@ -75,6 +83,22 @@ const chatbotSlice = createSlice({
     },
     setIsPaid: (state, action: PayloadAction<boolean>) => {
       state.isPaid = action.payload
+    },
+    resetConversation: (state) => { // Added
+      // Keep selected plan type, but clear conversation content/state.
+      state.messages = []
+      state.userAnswers = {}
+      state.isPaid = false
+      state.questionStep = 0
+      state.dailyCalories = null
+      state.stage = 'questioning'
+      state.isCheckoutModalOpen = false
+    },
+    openCheckoutModal: (state) => { // Added
+      state.isCheckoutModalOpen = true
+    },
+    closeCheckoutModal: (state) => { // Added
+      state.isCheckoutModalOpen = false
     },
     resetChat: () => initialState,
   },
@@ -87,9 +111,13 @@ export const {
   setStage,
   addMessage,
   setUserAnswer,
+  clearUserAnswerKeys,
   nextQuestion,
   setDailyCalories,
   setIsPaid,
+  resetConversation, // Added
+  openCheckoutModal, // Added
+  closeCheckoutModal, // Added
   resetChat,
 } = chatbotSlice.actions
 

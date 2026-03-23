@@ -18,7 +18,7 @@ export function Hero() {
             {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">Personalized fat-loss plans</span>
+              <span className="text-muted-foreground">AI Personalized fat-loss plans</span>
             </div>
 
             {/* Headline */}

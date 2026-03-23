@@ -19,18 +19,27 @@ export function Header() {
   const pathname      = usePathname()
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated)
   const planType        = useAppSelector((s) => s.chatbot.planType)
+  const isPaid          = useAppSelector((s) => s.chatbot.isPaid)
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const isOnChatbot = pathname === '/chatbot'
+  const isOnBasicFunnel = pathname === '/basic-plan-funnel'
 
   function handleChatWithAI() {
-    // If already paid/premium, go straight to chatbot
     if (planType === 'premium') {
       router.push('/chatbot')
-    } else {
-      dispatch(openModal())
+      return
     }
+    if (planType === 'basic' && !isPaid) {
+      router.push('/basic-plan-funnel')
+      return
+    }
+    if (planType === 'basic' && isPaid) {
+      router.push('/chatbot')
+      return
+    }
+    dispatch(openModal())
   }
 
   function handleLogout() {
@@ -57,7 +66,7 @@ export function Header() {
             /* ── Authenticated state ── */
             <div className="flex items-center gap-3">
               {/* Chat with AI — hidden on the chatbot page itself */}
-              {!isOnChatbot && (
+              {!isOnChatbot && !isOnBasicFunnel && (
                 <Button
                   size="sm"
                   className="gap-2"

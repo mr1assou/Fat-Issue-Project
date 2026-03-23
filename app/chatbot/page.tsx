@@ -13,6 +13,7 @@ import {
   setIsPaid,
 } from '@/features/chatbot/chatbotSlice'
 import { Header } from '@/components/layout/Header'
+import { CheckoutModal } from '@/components/checkout/CheckoutModal'
 import { Flame, ArrowLeft, Send, Download, RefreshCw, CheckCircle2, Zap } from 'lucide-react'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
@@ -131,13 +132,28 @@ export default function ChatbotPage() {
   const [inputValue, setInputValue]   = useState('')
   const [isTyping, setIsTyping]       = useState(false)
   const [planContent, setPlanContent] = useState('')
+  const [cardName, setCardName] = useState('')
+  const [cardNumber, setCardNumber] = useState('')
+  const [expiry, setExpiry] = useState('')
+  const [cvc, setCvc] = useState('')
+  const [isPaying, setIsPaying] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef       = useRef<HTMLInputElement>(null)
+
+  const requiresPremiumPayment = planType === 'premium' && !isPaid
 
   // Guard: no planType → send home
   useEffect(() => {
     if (!planType) router.replace('/')
   }, [planType, router])
+
+  // Basic questionnaire + paywall live on /basic-plan-funnel, not here
+  useEffect(() => {
+    if (planType === 'basic' && !isPaid) {
+      router.replace('/basic-plan-funnel')
+    }
+  }, [planType, isPaid, router])
 
   // Guard: premium requires login
   useEffect(() => {
@@ -151,6 +167,7 @@ export default function ChatbotPage() {
 
   // ── Boot greeting ───────────────────────────────────────────────────────────
   useEffect(() => {
+    if (planType === 'basic' && !isPaid) return
     if (planType && messages.length === 0 && stage === 'questioning') {
       const firstName = user?.name?.split(' ')[0] ?? 'there'
       const greeting  = planType === 'premium'
@@ -166,7 +183,7 @@ export default function ChatbotPage() {
       }, 400)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planType])
+  }, [planType, isPaid])
 
   // ── Bot reply util ──────────────────────────────────────────────────────────
   const botReply = useCallback(
@@ -180,7 +197,7 @@ export default function ChatbotPage() {
   // ── Handle user send ────────────────────────────────────────────────────────
   const handleSend = useCallback(() => {
     const text = inputValue.trim()
-    if (!text || ['paywall', 'upgrade', 'processing'].includes(stage)) return
+    if (!text || ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment) return
 
     dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
     setInputValue('')
@@ -225,21 +242,46 @@ export default function ChatbotPage() {
           }, 900)
         }, 2800)
       } else {
-        setTimeout(() => {
-          dispatch(setStage('paywall'))
-          setIsTyping(true)
+        if (isPaid) {
+          // User already paid on the /checkout page upfront
           setTimeout(() => {
-            setIsTyping(false)
-            dispatch(addMessage({
-              role: 'assistant',
-              content: `I'm ready to generate your full personalized plan! This includes:\n• A complete **7-day meal plan**\n• Daily **calorie & macro breakdown**\n• Expert **tips & recommendations**\n• A **downloadable summary**`,
-              type: 'paywall',
-            }))
-          }, 1200)
-        }, 3000)
+            dispatch(setStage('processing'))
+            dispatch(addMessage({ role: 'assistant', content: '✅ Perfect! I have all the info I need. Generating your personalized plan right now...', type: 'text' }))
+            setIsTyping(true)
+            setTimeout(() => {
+              const plan = buildPlan(userAnswers as Record<string, string>)
+              setPlanContent(plan)
+              setIsTyping(false)
+              dispatch(setStage('complete'))
+              dispatch(addMessage({ role: 'assistant', content: plan, type: 'plan' }))
+              setTimeout(() => {
+                dispatch(addMessage({
+                  role: 'assistant',
+                  content: `🎯 Your plan is ready! Need help with a specific day, meal swaps, or have questions? Just ask — I'm here all week! 💬`,
+                  type: 'upsell',
+                }))
+              }, 1500)
+            }, 3000)
+          }, 1500)
+        } else {
+          // Fallback paywall if they somehow skipped checkout
+          setTimeout(() => {
+            dispatch(setStage('paywall'))
+            setIsTyping(true)
+            setTimeout(() => {
+              setIsTyping(false)
+              dispatch(addMessage({
+                role: 'assistant',
+                content: `I'm ready to generate your full personalized plan! This includes:\n• A complete **7-day meal plan**\n• Daily **calorie & macro breakdown**\n• Expert **tips & recommendations**\n• A **downloadable summary**`,
+                type: 'paywall',
+              }))
+            }, 1200)
+          }, 3000)
+        }
       }
     }
-  }, [inputValue, stage, planType, questionStep, dispatch, botReply, userAnswers])
+  }, [inputValue, stage, planType, questionStep, dispatch, botReply, userAnswers, requiresPremiumPayment, isPaid])
+
 
   // ── Payment handler ─────────────────────────────────────────────────────────
   const handlePayment = useCallback(() => {
@@ -263,11 +305,21 @@ export default function ChatbotPage() {
     }, 3000)
   }, [dispatch, userAnswers])
 
+  // ── Auto-generate for Paid Basic Funnel ─────────────────────────────────────
+  // If a Basic user finishes the funnel and pays $2, their questions are already
+  // stored in Redux but the chatbot history is empty. We instantly generate the plan.
+  useEffect(() => {
+    if (planType === 'basic' && isPaid && messages.length <= 1 && stage !== 'complete' && stage !== 'processing') {
+      handlePayment()
+    }
+  }, [planType, isPaid, messages.length, stage, handlePayment])
+
   const QUESTIONS = planType === 'basic' ? BASIC_QUESTIONS : PREMIUM_QUESTIONS
   const totalQ    = QUESTIONS.length
-  const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage)
+  const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment
 
   if (!planType) return null
+  if (planType === 'basic' && !isPaid) return null
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -488,6 +540,7 @@ export default function ChatbotPage() {
                 isInputDisabled
                   ? stage === 'processing' ? 'Generating your plan...'
                   : stage === 'upgrade'    ? 'Upgrade to continue'
+                  : requiresPremiumPayment ? 'Complete premium payment to start chatting'
                   : 'Complete payment to continue'
                   : stage === 'complete'   ? 'Ask a follow-up question...'
                   : 'Type your answer...'
@@ -509,6 +562,109 @@ export default function ChatbotPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Premium payment gate (frontend-only) ── */}
+      {requiresPremiumPayment && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 px-5 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Stripe checkout</p>
+              <h3 className="mt-1 text-lg font-bold text-foreground">Unlock Premium Access</h3>
+              <p className="text-sm text-muted-foreground">Pay 9$ once to start chatting with the premium coach.</p>
+            </div>
+
+            <form
+              className="space-y-3 px-5 py-4"
+              onSubmit={(e) => {
+                e.preventDefault()
+                setPaymentError('')
+
+                if (!cardName.trim() || cardNumber.replace(/\s/g, '').length < 12 || !expiry.trim() || cvc.trim().length < 3) {
+                  setPaymentError('Please fill in valid card details.')
+                  return
+                }
+
+                setIsPaying(true)
+                setTimeout(() => {
+                  dispatch(setIsPaid(true))
+                  dispatch(setStage('questioning'))
+                  dispatch(addMessage({
+                    role: 'assistant',
+                    content: '✅ Payment successful! Premium access unlocked. You can now start chatting.',
+                    type: 'text',
+                  }))
+                  setIsPaying(false)
+                }, 1400)
+              }}
+            >
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Cardholder Name</label>
+                <input
+                  value={cardName}
+                  onChange={(e) => setCardName(e.target.value)}
+                  placeholder="Alex Johnson"
+                  className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Card Number</label>
+                <input
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value)}
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Expiry</label>
+                  <input
+                    value={expiry}
+                    onChange={(e) => setExpiry(e.target.value)}
+                    placeholder="MM/YY"
+                    className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">CVC</label>
+                  <input
+                    value={cvc}
+                    onChange={(e) => setCvc(e.target.value)}
+                    placeholder="123"
+                    className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
+
+              {paymentError && <p className="text-xs text-destructive">{paymentError}</p>}
+
+              <button
+                type="submit"
+                disabled={isPaying}
+                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 disabled:opacity-60"
+              >
+                {isPaying ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Processing payment...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4" />
+                    Pay 9$ and Continue
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-[11px] text-muted-foreground">Frontend demo only (no backend/real Stripe charge).</p>
+            </form>
+          </div>
+        </div>
+      )}
+      <CheckoutModal />
     </div>
   )
 
