@@ -3,8 +3,8 @@ import { Header } from '@/components/layout/Header'
 import { AuthForm } from '@/components/auth/AuthForm'
 
 export const metadata = {
-  title: 'Sign In - DreamWell',
-  description: 'Sign in to your DreamWell account to access your sleep resources and community.',
+  title: 'Sign In - FitlyAi',
+  description: 'Sign in to your FitlyAi account to access your sleep resources and community.',
 }
 
 export default function LoginPage() {

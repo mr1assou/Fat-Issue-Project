@@ -13,31 +13,31 @@ export function Hero() {
             {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">Personalized sleep solutions</span>
+              <span className="text-muted-foreground">Personalized fat-loss plans</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              <span className="text-balance">Better Sleep,</span>
+              <span className="text-balance">Weight Loss,</span>
               <br />
               <span className="text-primary">Better Life</span>
             </h1>
 
             {/* Subheadline */}
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-              Discover your unique sleep profile and unlock personalized strategies for restful nights and energized days. Join thousands who have transformed their sleep.
+              Discover your unique profile and get a personalized plan to reduce stubborn belly fat, boost your energy, and feel more confident every day. Join thousands who transformed their bodies.
             </p>
 
             {/* CTA Buttons */}
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" className="w-full gap-2 sm:w-auto" asChild>
                 <Link href="/questionnaire">
-                  Start Your Assessment
+                  Start Your Fat-Loss Assessment
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" asChild>
-                <Link href="/pricing">View Plans</Link>
+                <Link href="/pricing">View Programs</Link>
               </Button>
             </div>
 
@@ -54,7 +54,7 @@ export function Hero() {
                     </div>
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">10,000+ happy sleepers</span>
+                <span className="text-sm text-muted-foreground">10,000+ fat-loss success stories</span>
               </div>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -81,7 +81,7 @@ export function Hero() {
                 <div className="overflow-hidden rounded-2xl shadow-lg">
                   <Image
                     src="/images/fat.png"
-                    alt="Woman lying awake at 2:38 AM unable to sleep"
+                    alt="Person dealing with stubborn belly fat"
                     width={300}
                     height={400}
                     className="h-auto w-full object-cover"
@@ -97,7 +97,7 @@ export function Hero() {
                 <div className="overflow-hidden rounded-2xl shadow-lg">
                   <Image
                     src="/images/healthy.png"
-                    alt="Woman waking up refreshed and happy at 7:00 AM"
+                    alt="Person after reducing stubborn belly fat"
                     width={300}
                     height={400}
                     className="h-auto w-full object-cover"

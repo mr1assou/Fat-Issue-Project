@@ -4,7 +4,7 @@ import { QuestionnaireForm } from '@/components/questionnaire/QuestionnaireForm'
 import { Moon } from 'lucide-react'
 
 export const metadata = {
-  title: 'Sleep Assessment - DreamWell',
+  title: 'Sleep Assessment - FitlyAi',
   description: 'Take our personalized sleep assessment to discover your unique sleep profile and get customized recommendations.',
 }
 

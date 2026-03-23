@@ -21,7 +21,7 @@ export function CommunityLocked() {
       </h2>
 
       <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-        The DreamWell community is exclusively available for Gold members. Upgrade to unlock full access and connect with others on their sleep journey.
+        The FitlyAi community is exclusively available for Gold members. Upgrade to unlock full access and connect with others on their body goals journey.
       </p>
 
       <Card className="mx-auto mt-8 max-w-sm border-accent/30 bg-accent/5">

@@ -29,10 +29,10 @@ export default function CommunityPage() {
             <div className="grid items-center gap-8 lg:grid-cols-2">
               <div className="text-center lg:text-left">
                 <h1 className="text-3xl font-semibold text-foreground sm:text-4xl">
-                  DreamWell Community
+                  FitlyAi Community
                 </h1>
                 <p className="mt-4 text-muted-foreground">
-                  Connect with fellow sleep enthusiasts, share your journey, and get support from our community of members all working towards better sleep.
+                  Connect with fellow fat-loss enthusiasts, share your journey, and get support from our community of members all working towards a lighter, more confident body.
                 </p>
 
                 {hasAccess && (

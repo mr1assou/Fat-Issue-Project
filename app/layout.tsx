@@ -5,8 +5,8 @@ import { ReduxProvider } from '@/lib/redux/provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'DreamWell - Better Sleep, Better Life',
-  description: 'Discover personalized sleep solutions and join a community dedicated to improving sleep health and overall wellness.',
+  title: 'FitlyAi - Less Stubborn Fat, Better Life',
+  description: 'Discover personalized fat-loss solutions and join a community dedicated to improving confidence and overall wellness.',
   generator: 'v0.app',
   keywords: ['sleep', 'wellness', 'health', 'sleep improvement', 'rest', 'relaxation'],
   icons: {

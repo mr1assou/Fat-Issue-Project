@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Menu, X, Moon, User, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, X, Flame, User, LogOut, ChevronDown } from 'lucide-react'
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -35,9 +35,9 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Moon className="h-7 w-7 text-accent" />
+          <Flame className="h-7 w-7 text-accent" />
           <span className="font-serif text-xl font-semibold tracking-tight text-foreground">
-            DreamWell
+            FitlyAi
           </span>
         </Link>
 

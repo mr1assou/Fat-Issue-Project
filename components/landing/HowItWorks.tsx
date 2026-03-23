@@ -4,20 +4,20 @@ const steps = [
   {
     icon: ClipboardList,
     step: '01',
-    title: 'Take the Assessment',
-    description: 'Answer a few questions about your sleep habits, lifestyle, and goals. It only takes 5 minutes.',
+    title: 'Take the Fat-Loss Assessment',
+    description: 'Answer a few questions about your belly fat triggers, routine, and goals. It only takes 5 minutes.',
   },
   {
     icon: BarChart3,
     step: '02',
-    title: 'Get Your Sleep Profile',
-    description: 'Receive a detailed analysis of your sleep patterns and personalized recommendations.',
+    title: 'Get Your Body-Fat Profile',
+    description: 'Receive a clear breakdown of what’s keeping stubborn belly fat around and personalized recommendations.',
   },
   {
     icon: Rocket,
     step: '03',
-    title: 'Transform Your Sleep',
-    description: 'Follow your customized plan and track your progress as you achieve better rest.',
+    title: 'Transform Your Stubborn Belly Fat',
+    description: 'Follow your customized plan and track your progress as your belly feels lighter over time.',
   },
 ]
 
@@ -28,10 +28,10 @@ export function HowItWorks() {
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-serif text-3xl font-semibold text-foreground sm:text-4xl">
-            How It Works
+            How It Works for Fat Loss
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Your journey to better sleep starts with three simple steps.
+            Your journey to reduce stubborn belly fat starts with three simple steps.
           </p>
         </div>
 

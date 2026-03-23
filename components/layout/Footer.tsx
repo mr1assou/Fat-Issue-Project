@@ -28,11 +28,11 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2">
               <Moon className="h-7 w-7 text-accent" />
               <span className="font-serif text-xl font-semibold text-foreground">
-                DreamWell
+                FitlyAi
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Helping you achieve better sleep and overall wellness through personalized guidance and community support.
+              Helping you reduce stubborn belly fat and feel confident through personalized guidance and community support.
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 border-t border-border pt-8">
           <p className="text-center text-sm text-muted-foreground">
-            {new Date().getFullYear()} DreamWell. All rights reserved. Sleep better, live better.
+            {new Date().getFullYear()} FitlyAi. All rights reserved.
           </p>
         </div>
       </div>

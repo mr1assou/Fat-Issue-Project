@@ -4,7 +4,7 @@ import { PricingCard, type PricingPlan } from '@/components/pricing/PricingCard'
 import { Sparkles } from 'lucide-react'
 
 export const metadata = {
-  title: 'Pricing - DreamWell',
+  title: 'Pricing - FitlyAi',
   description: 'Choose the plan that fits your sleep improvement journey. Silver for the essentials, Gold for full community access.',
 }
 

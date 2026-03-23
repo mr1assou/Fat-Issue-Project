@@ -100,7 +100,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <CardHeader className="text-center">
           <Link href="/" className="mb-4 inline-flex items-center justify-center gap-2">
             <Moon className="h-8 w-8 text-accent" />
-            <span className="font-serif text-2xl font-semibold text-foreground">DreamWell</span>
+            <span className="font-serif text-2xl font-semibold text-foreground">FitlyAi</span>
           </Link>
           <CardTitle className="text-2xl font-semibold text-foreground">
             {isLogin ? 'Welcome back' : 'Create your account'}

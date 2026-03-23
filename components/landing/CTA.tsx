@@ -12,8 +12,8 @@ export function CTA() {
           <div className="relative mx-auto max-w-sm lg:max-w-none">
             <div className="overflow-hidden rounded-2xl shadow-xl">
               <Image
-                src="/images/ready.png"
-                alt="Person enjoying peaceful restful sleep"
+                src="/images/healthy_man.png"
+                alt="Person feeling lighter after reducing stubborn belly fat"
                 width={450}
                 height={400}
                 className="h-auto w-full max-h-[400px] sm:max-h-[450px] lg:max-h-[400px] object-cover"
@@ -24,10 +24,10 @@ export function CTA() {
           {/* Content */}
           <div className="text-center lg:text-left">
             <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">
-              Ready to Transform Your Sleep?
+              Ready to Transform Your Belly Fat?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Take our free sleep assessment and discover your personalized path to better rest. Your journey to peaceful nights starts now.
+              Take our free fat-loss assessment and discover your personalized path to a lighter, more comfortable body. Start today and build habits that stick.
             </p>
             <ul className="mt-6 space-y-3 text-left">
               <li className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export function CTA() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-muted-foreground">5-minute personalized assessment</span>
+                <span className="text-muted-foreground">5-minute personalized fat-loss assessment</span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
@@ -44,7 +44,7 @@ export function CTA() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-muted-foreground">Science-backed recommendations</span>
+                <span className="text-muted-foreground">Evidence-based recommendations</span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
@@ -58,12 +58,12 @@ export function CTA() {
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
               <Button size="lg" className="w-full gap-2 sm:w-auto" asChild>
                 <Link href="/questionnaire">
-                  Start Free Assessment
+                  Start Free Fat-Loss Assessment
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" asChild>
-                <Link href="/pricing">Compare Plans</Link>
+                <Link href="/pricing">Compare Programs</Link>
               </Button>
             </div>
           </div>

@@ -5,33 +5,33 @@ import { Card, CardContent } from '@/components/ui/card'
 const benefits = [
   {
     icon: Moon,
-    title: 'Personalized Sleep Plans',
-    description: 'Get a customized sleep improvement plan based on your unique sleep patterns and lifestyle.',
+    title: 'Personalized Fat-Loss Plans',
+    description: 'Get a customized fat-loss strategy based on your habits, schedule, and goals.',
   },
   {
     icon: Brain,
     title: 'Science-Backed Methods',
-    description: 'Our recommendations are grounded in sleep science and cognitive behavioral therapy principles.',
+    description: 'Our recommendations are built on evidence-based nutrition and behavior change principles.',
   },
   {
     icon: Heart,
     title: 'Holistic Wellness',
-    description: 'Address the root causes of poor sleep with guidance on stress, nutrition, and exercise.',
+    description: 'Address the root causes of stubborn belly fat with guidance on stress, nutrition, and exercise.',
   },
   {
     icon: Zap,
-    title: 'Quick Results',
-    description: 'Many users report improved sleep quality within the first two weeks of following their plan.',
+    title: 'Steady, Real Results',
+    description: 'Many users notice progress within the first two weeks when following the plan consistently.',
   },
   {
     icon: Users,
-    title: 'Supportive Community',
-    description: 'Connect with others on their sleep journey and share tips, wins, and encouragement.',
+    title: 'Chatbot for Personalized Plan',
+    description: 'Ask anytime. Get instant guidance, meal and habit suggestions, and a plan built around your stubborn belly fat goals.',
   },
   {
     icon: BookOpen,
     title: 'Expert Resources',
-    description: 'Access our comprehensive eBook and educational content to deepen your understanding.',
+    description: 'Access our guided eBook and educational content to deepen your understanding.',
   },
 ]
 
@@ -46,8 +46,8 @@ export function Benefits() {
             <div className="grid grid-cols-2 gap-4">
               <div className="overflow-hidden rounded-2xl shadow-lg">
                 <Image
-                  src="/images/sleep-struggle-man.png"
-                  alt="Man struggling to sleep"
+                  src="/images/fat_struggle_man.png"
+                  alt="Person struggling with stubborn belly fat"
                   width={280}
                   height={350}
                   className="h-full w-full object-cover"
@@ -55,8 +55,8 @@ export function Benefits() {
               </div>
               <div className="overflow-hidden rounded-2xl shadow-lg mt-6">
                 <Image
-                  src="/images/sleep-awake-woman.png"
-                  alt="Woman lying awake at night"
+                  src="/images/fat_struggle_women.png"
+                  alt="Person working on reducing stubborn belly fat"
                   width={280}
                   height={350}
                   className="h-full w-full object-cover"
@@ -66,18 +66,18 @@ export function Benefits() {
           </div>
           <div className="order-1 lg:order-2">
             <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">
-              We Understand Your Sleep Struggles
+              We Understand Your Stubborn Belly Fat
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              Millions of people lie awake at night, watching the clock tick away. The frustration of not being able to fall asleep affects every aspect of your life. We have been there too, and that is why we created DreamWell.
+              If you have tried everything and still feel stuck around the belly, you are not alone. That frustration can affect your confidence and energy. We built FitlyAi to help you take real steps toward a lighter, more comfortable body.
             </p>
             <p className="mt-4 text-muted-foreground">
-              Our comprehensive approach addresses every aspect of sleep health, from daily habits to your sleep environment.
+              Our approach focuses on the habits and routines that support stubborn belly fat loss, from daily choices to lifestyle factors that help you stay consistent.
             </p>
           </div>
         </div>
 
-        {/* Benefits Grid */}
+        {/* Fat-Loss Benefits Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map((benefit) => (
             <Card
