@@ -42,7 +42,7 @@ export function Benefits() {
         {/* Header with Image */}
         <div className="mb-16 grid items-center gap-12 lg:grid-cols-2">
    
-          <div className="order-1 lg:order-2">
+          <div className="order-2 sm:order-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="overflow-hidden rounded-2xl shadow-lg">
                 <Image
@@ -64,7 +64,7 @@ export function Benefits() {
               </div>
             </div>
           </div>
-          <div className="order-1 lg:order-2">
+          <div className="order-1 sm:order-2">
             <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">
               We Understand Your Stubborn Belly Fat
             </h2>

@@ -1,156 +1,115 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks'
-import { logout } from '@/features/auth/authSlice'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Menu, X, Flame, User, LogOut, ChevronDown } from 'lucide-react'
+import { Flame, MessageCircle, ChevronDown } from 'lucide-react'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { openModal, setPlanType, setStage, resetChat } from '@/features/chatbot/chatbotSlice'
+import { logout } from '@/features/auth/authSlice'
+import { GetStartedModal } from '@/components/landing/GetStartedModal'
+import { useState } from 'react'
 
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/questionnaire', label: 'Sleep Assessment' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/community', label: 'Community' },
-]
+// Static demo user name as requested
+const DEMO_NAME = 'Marwane Assou'
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const dispatch = useAppDispatch()
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth)
+  const dispatch      = useAppDispatch()
+  const router        = useRouter()
+  const pathname      = usePathname()
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated)
+  const planType        = useAppSelector((s) => s.chatbot.planType)
 
-  const handleLogout = () => {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const isOnChatbot = pathname === '/chatbot'
+
+  function handleChatWithAI() {
+    // If already paid/premium, go straight to chatbot
+    if (planType === 'premium') {
+      router.push('/chatbot')
+    } else {
+      dispatch(openModal())
+    }
+  }
+
+  function handleLogout() {
     dispatch(logout())
+    dispatch(resetChat())
+    setDropdownOpen(false)
+    router.push('/')
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Flame className="h-7 w-7 text-accent" />
-          <span className="font-serif text-xl font-semibold tracking-tight text-foreground">
-            FitlyAi
-          </span>
-        </Link>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <Flame className="h-7 w-7 text-primary" />
+            <span className="font-serif text-xl font-semibold tracking-tight text-foreground">
+              FitlyAi
+            </span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Desktop Auth Buttons */}
-        <div className="hidden items-center gap-3 md:flex">
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-medium">{user.name}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          {/* Right side */}
+          {isAuthenticated ? (
+            /* ── Authenticated state ── */
+            <div className="flex items-center gap-3">
+              {/* Chat with AI — hidden on the chatbot page itself */}
+              {!isOnChatbot && (
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleChatWithAI}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Chat with AI
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="text-sm">
-                  <span className="text-muted-foreground">Plan:</span>
-                  <span className="ml-1 font-medium capitalize">{user.plan || 'Free'}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/auth/register">Get Started</Link>
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-lg md:hidden"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Menu className="h-6 w-6 text-foreground" />
-          )}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="border-t border-border bg-background md:hidden">
-          <nav className="flex flex-col px-4 py-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              {isAuthenticated && user ? (
-                <>
-                  <div className="flex items-center gap-3 px-4 py-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                      <User className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{user.name}</p>
-                      <p className="text-sm text-muted-foreground capitalize">{user.plan || 'Free'} Plan</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" onClick={handleLogout} className="mt-2 bg-transparent">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" asChild>
-                    <Link href="/auth/login">Sign In</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/auth/register">Get Started</Link>
-                  </Button>
-                </>
               )}
+
+              {/* Avatar + name dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className="flex items-center gap-2 rounded-full border border-border/60 bg-secondary/50 py-1.5 pl-2 pr-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                >
+                  {/* Avatar circle with initials */}
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                    {DEMO_NAME.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                  </span>
+                  <span className="hidden sm:inline">{DEMO_NAME.split(' ')[0]}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-border bg-background shadow-lg">
+                    <div className="border-b border-border px-4 py-3">
+                      <p className="text-sm font-semibold text-foreground">{DEMO_NAME}</p>
+                      <p className="text-xs text-muted-foreground">Premium · Active</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </nav>
+          ) : (
+            /* ── Guest state ── */
+            <Button onClick={() => dispatch(openModal())}>
+              Get Started
+            </Button>
+          )}
         </div>
-      )}
-    </header>
+      </header>
+
+      {/* Modal rendered once at header level */}
+      <GetStartedModal />
+    </>
   )
 }

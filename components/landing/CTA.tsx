@@ -27,7 +27,7 @@ export function CTA() {
               Ready to Transform Your Belly Fat?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Take our free fat-loss assessment and discover your personalized path to a lighter, more comfortable body. Start today and build habits that stick.
+              Talk to our AI chatbot to get a personalized plan to reduce stubborn belly fat. Start today and build habits that stick.
             </p>
             <ul className="mt-6 space-y-3 text-left">
               <li className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export function CTA() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-muted-foreground">5-minute personalized fat-loss assessment</span>
+                <span className="text-muted-foreground">Quick AI chat for your personalized plan</span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
@@ -57,13 +57,13 @@ export function CTA() {
             </ul>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
               <Button size="lg" className="w-full gap-2 sm:w-auto" asChild>
-                <Link href="/questionnaire">
-                  Start Free Fat-Loss Assessment
+                <Link href="/">
+                  Get Personalized Plan (AI)
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" asChild>
-                <Link href="/pricing">Compare Programs</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </div>
           </div>

@@ -57,13 +57,13 @@ export function Talk() {
             </ul>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
               <Button size="lg" className="w-full gap-2 sm:w-auto" asChild>
-                <Link href="/community">
-                  Join the Support Community
+                <Link href="/">
+                  Start Your Program
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" asChild>
-                <Link href="/pricing">View Programs</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </div>
           </div>

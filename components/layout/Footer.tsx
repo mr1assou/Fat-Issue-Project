@@ -3,18 +3,13 @@ import { Moon } from 'lucide-react'
 
 const footerLinks = {
   product: [
-    { href: '/questionnaire', label: 'Sleep Assessment' },
-    { href: '/pricing', label: 'Pricing' },
-    { href: '/community', label: 'Community' },
+    { href: '/', label: 'Home' },
   ],
   company: [
-    { href: '/about', label: 'About Us' },
-    { href: '/blog', label: 'Blog' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/', label: 'Home' },
   ],
   legal: [
-    { href: '/privacy', label: 'Privacy Policy' },
-    { href: '/terms', label: 'Terms of Service' },
+    { href: '/', label: 'Home' },
   ],
 }
 

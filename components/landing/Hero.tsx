@@ -1,9 +1,14 @@
-import Link from 'next/link'
+'use client'
+
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Sparkles } from 'lucide-react'
+import { useAppDispatch } from '@/lib/redux/hooks'
+import { openModal } from '@/features/chatbot/chatbotSlice'
 
 export function Hero() {
+  const dispatch = useAppDispatch()
+
   return (
     <section className="relative overflow-hidden bg-background px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">
@@ -29,20 +34,22 @@ export function Hero() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" className="w-full gap-2 sm:w-auto" asChild>
-                <Link href="/questionnaire">
-                  Start Your Fat-Loss Assessment
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+              <Button
+                size="lg"
+                className="w-full gap-2 sm:w-auto"
+                onClick={() => dispatch(openModal())}
+              >
+                Chat with AI for a Plan
+                <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" asChild>
-                <Link href="/pricing">View Programs</Link>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent" onClick={() => dispatch(openModal())}>
+                Get Started – 9$
               </Button>
             </div>
 
             {/* Social proof */}
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 border-t border-border pt-8 sm:flex-row sm:gap-8">
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 border-t border-border pt-8 sm:flex-row sm:gap-8 lg:justify-start">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -76,7 +83,7 @@ export function Hero() {
           {/* Images */}
           <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
             <div className="grid grid-cols-2 gap-4">
-              {/* Before - Struggling at 2:38 AM */}
+              {/* Before */}
               <div className="relative">
                 <div className="overflow-hidden rounded-2xl shadow-lg">
                   <Image
@@ -92,7 +99,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* After - Refreshed at 7:00 AM */}
+              {/* After */}
               <div className="relative mt-8">
                 <div className="overflow-hidden rounded-2xl shadow-lg">
                   <Image
