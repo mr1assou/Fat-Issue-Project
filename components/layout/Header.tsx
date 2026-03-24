@@ -22,6 +22,7 @@ export function Header() {
   const isPaid          = useAppSelector((s) => s.chatbot.isPaid)
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
 
   const isOnChatbot = pathname === '/chatbot'
   const isOnBasicFunnel = pathname === '/basic-plan-funnel'
@@ -47,6 +48,35 @@ export function Header() {
     dispatch(resetChat())
     setDropdownOpen(false)
     router.push('/')
+  }
+
+  async function handleGeneratePdf() {
+    try {
+      setIsGeneratingPdf(true)
+      const res = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'FitlyAi-PersonalizedPlan.pdf'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsGeneratingPdf(false)
+    }
   }
 
   return (
@@ -110,9 +140,14 @@ export function Header() {
             </div>
           ) : (
             /* ── Guest state ── */
-            <Button onClick={() => dispatch(openModal())}>
-              Get Started
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
+                {isGeneratingPdf ? 'Generating...' : 'Generate PDF'}
+              </Button>
+              <Button onClick={() => dispatch(openModal())}>
+                Get Started
+              </Button>
+            </div>
           )}
         </div>
       </header>

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { closeModal, openModal, setPlanType, setStage, resetChat, setIsPaid, openCheckoutModal } from '@/features/chatbot/chatbotSlice'
+import { closeModal, openModal, setPlanType, setStage, resetChat, setIsPaid } from '@/features/chatbot/chatbotSlice'
 import { loginSuccess } from '@/features/auth/authSlice'
 import { Sparkles, X, Check, Zap, Lock } from 'lucide-react'
 import { useState } from 'react'
@@ -15,6 +15,7 @@ const BASIC_FEATURES = [
 const BASIC_MISSING = ['Full 7-day meal plan', 'PDF download', 'Personalized recommendations']
 
 const PRICE = '9$'
+const CHATBOT_SESSION_STORAGE_KEY = 'chatbot-session-v1'
 
 const PREMIUM_FEATURES = [
   'Full personalized 7-day plan',
@@ -29,6 +30,7 @@ export function GetStartedModal() {
   const router = useRouter()
   const isOpen = useAppSelector((s) => s.chatbot.isModalOpen)
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated)
+  const currentUser = useAppSelector((s) => s.auth.user)
   /** Only the plan button you clicked shows loading; the other stays idle. */
   const [loadingPlan, setLoadingPlan] = useState<'basic' | 'premium' | null>(null)
 
@@ -66,23 +68,54 @@ export function GetStartedModal() {
   }
 
   function handlePremium() {
-    setLoadingPlan('premium')
-    setTimeout(() => {
+    if (isAuthenticated) {
+      if (typeof window !== 'undefined' && currentUser) {
+        window.localStorage.setItem(
+          CHATBOT_SESSION_STORAGE_KEY,
+          JSON.stringify({
+            planType: 'premium',
+            isPaid: false,
+            isAuthenticated: true,
+            user: currentUser,
+          })
+        )
+      }
       dispatch(resetChat())
       dispatch(setPlanType('premium'))
       dispatch(setStage('questioning'))
       dispatch(setIsPaid(false))
-      dispatch(
-        loginSuccess({
-          id: 'google-user-001',
-          email: 'user@gmail.com',
-          name: 'Alex Johnson',
-          plan: 'gold',
-        })
-      )
+      dispatch(closeModal())
+      router.push('/chatbot')
+      return
+    }
+
+    setLoadingPlan('premium')
+    setTimeout(() => {
+      const premiumUser = {
+        id: 'google-user-001',
+        email: 'user@gmail.com',
+        name: 'Alex Johnson',
+        plan: 'gold' as const,
+      }
+
+      dispatch(resetChat())
+      dispatch(setPlanType('premium'))
+      dispatch(setStage('questioning'))
+      dispatch(setIsPaid(false))
+      dispatch(loginSuccess(premiumUser))
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          CHATBOT_SESSION_STORAGE_KEY,
+          JSON.stringify({
+            planType: 'premium',
+            isPaid: false,
+            isAuthenticated: true,
+            user: premiumUser,
+          })
+        )
+      }
       dispatch(closeModal())
       setLoadingPlan(null)
-      dispatch(openCheckoutModal())
       router.push('/chatbot')
     }, 1800)
   }

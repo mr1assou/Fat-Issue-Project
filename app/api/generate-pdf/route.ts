@@ -8,6 +8,326 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
 
+const DEFAULT_PLAN_TEXT = `INTRODUCTION
+
+Achieving fat loss and enhancing metabolic health are essential for leading a vibrant, energetic life. Losing weight not only improves how you feel physically but also boosts your confidence and overall well-being. It’s important to adopt a sustainable approach, one that focuses on nourishing your body while addressing your weight loss goals. Together, we’ll create a plan tailored just for you!
+
+USER PROFILE ANALYSIS
+
+From the information you've shared, we understand that you’re a 30-year-old male with a height of 180 cm and current weight of 90 kg. You're aiming to reach a target weight of 75 kg. Your activity level is low, and while you typically eat three meals a day, you often consume fast food. This plan will focus on transitioning you toward healthier choices while gradually incorporating more movement, aiming to increase your energy levels along the way.
+
+BODY & METABOLISM ANALYSIS
+
+Your body needs a certain amount of calories to maintain its current weight, which comes from your Basal Metabolic Rate (BMR) combined with your activity level (Total Daily Energy Expenditure, TDEE). By consuming fewer calories than your body uses, you will start to lose weight. This works because your body taps into stored fat for energy.
+
+CALORIE STRATEGY
+
+To lose weight, you will be operating at a calorie deficit, which means you will consume fewer calories than your body requires to maintain its current weight. This deficit encourages your body to use stored fat for energy, which leads to weight loss over time.
+
+FAT LOSS STRATEGY
+
+Your journey towards your target weight will be gradual, focusing on around 0.5 kg of weight loss per week, making this sustainable. As you start making better food choices and increasing physical activity, you may notice increased energy levels and improvements in your overall health.
+
+FULL 7-DAY DIET PLAN
+
+We'll structure this for each day with specific focus areas for meals and activities.
+
+DAY 1 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Today’s goal is to kickstart fat burning while introducing healthy habits. We’ll focus on balancing your meals with nutritious options to sustain your energy.
+
+Full Meal Plan
+
+Breakfast: Omelette with two eggs, tomatoes, and spinach. (High protein for energy and healthy fats.)
+
+Lunch: Grilled chicken salad with mixed greens and vinaigrette. (Protein-rich to fuel your day with vitamins from vegetables.)
+
+Dinner: Baked salmon with quinoa and steamed broccoli. (Great source of omega-3, fiber, and proteins.)
+
+Snacks: A piece of fruit like an apple or a handful of nuts. (Healthy snack to avoid processed foods.)
+
+Daily Routine
+
+Morning: Start your day with the omelette, hydrate with water, and consider a 10-minute walk after breakfast to boost morning energy.
+
+Midday: Enjoy your grilled chicken salad for lunch and stay hydrated.
+
+Evening: Aim for dinner around 7 PM. Post-dinner light stretching can help relax your body.
+
+Night: Try to get to bed around the same time each night, aiming for 7-9 hours of sleep to support recovery.
+
+Physical Activity (Daily)
+
+Consider a gentle walk for 20-30 minutes. This helps your body burn more calories and enhances weight loss.
+
+Daily Tips
+
+1. Start watching portion sizes, especially with fast food.
+
+2. Drink plenty of water throughout the day.
+
+3. Try to include at least one vegetable in every meal.
+
+Explanation
+
+Your body begins to tap into its stored fat for energy, which is essential for weight loss. This adaptation is crucial as you shift towards healthier eating and a more active lifestyle.
+
+DAY 2 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Today focuses on sustaining energy levels while incorporating more whole foods into your diet.
+
+Full Meal Plan
+
+Breakfast: Greek yogurt with mixed berries and a sprinkle of granola. (Good source of protein and antioxidants.)
+
+Lunch: Turkey wrap with whole grain tortilla, lettuce, and mustard. (Lean protein and whole grains will keep you full longer.)
+
+Dinner: Stir-fried vegetables with tofu and brown rice. (Fiber-rich to promote digestion and vitamins for overall health.)
+
+Snacks: Carrot sticks with hummus. (Healthy fats and fiber for snacking.)
+
+Daily Routine
+
+Morning: Enjoy Greek yogurt and hydrate to kickstart your metabolism.
+
+Midday: Eat your turkey wrap and focus on hydration.
+
+Evening: Have your stir-fry around 6:30 PM, and take a 15-minute light evening walk post-dinner to wind down.
+
+Night: Maintain a consistent bedtime.
+
+Physical Activity (Daily)
+
+Engage in light stretching or yoga for about 20-30 minutes to enhance flexibility and relieve stress.
+
+Daily Tips
+
+1. Prep your meals in advance to avoid fast food temptations.
+
+2. Choose whole grain options wherever possible.
+
+3. Stay mindful when eating, focusing on your food.
+
+Explanation
+
+Your body is utilizing fat for energy, especially when you provide it with wholesome foods. Small consistent changes lead to significant results over time!
+
+DAY 3 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Focus on satisfying meals that curb cravings and encourage balanced nutrition.
+
+Full Meal Plan
+
+Breakfast: Smoothie with spinach, banana, and peanut butter. (Nutritious and filling for a healthy start.)
+
+Lunch: Quinoa bowl with black beans, avocado, and salsa. (Packed with protein and healthy fats.)
+
+Dinner: Grilled chicken breast with sweet potatoes and green beans. (Combines proteins and complex carbs for energy balance.)
+
+Snacks: Greek yogurt. (Light and high in protein.)
+
+Daily Routine
+
+Morning: Start with your smoothie, ensuring hydration.
+
+Midday: Relish your quinoa bowl; it’s nutritious and satisfying.
+
+Evening: Dinner around 7 PM, followed by light stretching.
+
+Night: Focus on getting enough sleep tonight.
+
+Physical Activity (Daily)
+
+Consider a simple 30-minute walk after dinner to promote digestion and relaxation.
+
+Daily Tips
+
+1. Try to limit fast food to once or twice a week.
+
+2. Experiment with new fruits and vegetables to keep meals exciting.
+
+3. Focus on mindfulness during meals.
+
+Explanation
+
+Your body is adapting to using fat as a primary energy source, which is beneficial for weight loss when paired with healthier food choices!
+
+DAY 4 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Reinforce focusing on nutrition and staying active while observing your body's responses.
+
+Full Meal Plan
+
+Breakfast: Overnight oats with chia seeds and sliced banana. (Rich in fiber and keeps you full.)
+
+Lunch: Lentil soup with whole-grain bread. (High in fiber and protein to sustain energy.)
+
+Dinner: Homemade vegetable stir fry with brown rice. (Packed with nutrients and low in calories.)
+
+Snacks: A handful of almonds. (Healthy fats and protein for snacking.)
+
+Daily Routine
+
+Morning: Enjoy your overnight oats, hydrate, and aim for a short walk.
+
+Midday: Savor your lentil soup for lunch while staying hydrated.
+
+Evening: Have your stir fry at a reasonable hour, incorporating a light evening walk afterward.
+
+Night: Strive for consistency in your sleep schedule.
+
+Physical Activity (Daily)
+
+A combination of a brisk walk and light stretches for 20-30 minutes will be beneficial.
+
+Daily Tips
+
+1. Keep nut portions in check as they are calorie-dense.
+
+2. Explore new recipes to keep meals exciting and healthy.
+
+3. Embrace eating slowly to appreciate your food more.
+
+Explanation
+
+Your body becomes more efficient at burning fat for energy, and by fueling it with quality nutrition, you're setting yourself up for long-term success!
+
+DAY 5 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Enhance your focus on whole foods and maintain momentum.
+
+Full Meal Plan
+
+Breakfast: Scrambled eggs with avocado on whole-grain toast. (Healthy fats and protein set a great tone for the day.)
+
+Lunch: Chicken Caesar salad (light dressing). (A good mix of protein and greens to meet your needs.)
+
+Dinner: Baked tilapia with quinoa and a side of mixed vegetables. (Lean protein paired with nutritious grains and veggies.)
+
+Snacks: Sliced cucumber with hummus. (Low-calorie, nutrient-dense snack.)
+
+Daily Routine
+
+Morning: Enjoy your breakfast, hydrate, and incorporate a short walk.
+
+Midday: Savor your salad and maintain hydration.
+
+Evening: Dinner around 7 PM, follow it up with light yoga.
+
+Night: Stick to a consistent bedtime routine.
+
+Physical Activity (Daily)
+
+Engaging in a 30-minute home workout with bodyweight exercises can mix up your routine.
+
+Daily Tips
+
+1. Limit sugary drinks; opt for water or herbal tea instead.
+
+2. Consider planning meals for the week to make it easier.
+
+3. Take mindful breaks during the day to check in with your hunger levels.
+
+Explanation
+
+As your body gets accustomed to nutritious foods, you’ll find it easier to resist cravings, boosting your weight loss journey even further!
+
+DAY 6 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Stay committed to your goals and continue cultivating healthy habits.
+
+Full Meal Plan
+
+Breakfast: Whole grain pancakes topped with fresh berries. (A delicious, energizing start to the day!)
+
+Lunch: Grilled shrimp over a garden salad. (Light yet providing good proteins and vitamins.)
+
+Dinner: Vegetable curry with chickpeas and brown rice. (A flavorful combination packed with fiber and protein.)
+
+Snacks: A small serving of mixed nuts. (Nourishing and satisfying.)
+
+Daily Routine
+
+Morning: A hearty breakfast to fuel your day followed by hydration.
+
+Midday: Relish your shrimp salad while staying hydrated.
+
+Evening: Enjoy your dinner; try a short meditation to unwind afterward.
+
+Night: Consistency in sleep helps proper recovery.
+
+Physical Activity (Daily)
+
+Try combining a walking and low-intensity workout for about 30 minutes for an effective routine.
+
+Daily Tips
+
+1. Find easy, healthy recipes to cook; this makes meal prep more enjoyable.
+
+2. Reward yourself with non-food-related rewards for hitting small milestones.
+
+3. Set a hydration goal for the day to ensure you drink enough water.
+
+Explanation
+
+Your metabolism is adapting to its new routine, utilizing energy from food better while burning stored fat effectively!
+
+DAY 7 - COMPLETE DAILY PLAN
+
+Daily Objective
+
+Celebrate your week of commitment and reflection as it leads to positive change!
+
+Full Meal Plan
+
+Breakfast: Smoothie bowl topped with nuts and seeds. (Packed with nutrients and flavors!)
+
+Lunch: Quinoa salad with greens, chickpeas, and a lemon vinaigrette. (Nutrition-dense and filling.)
+
+Dinner: Grilled chicken fajitas with peppers served in lettuce wraps. (Lean protein and low-carb wrap.)
+
+Snacks: Yogurt with sliced fruit. (High in protein and refreshing.)
+
+Daily Routine
+
+Morning: Kickstart your day with a flavorful smoothie bowl and hydrate.
+
+Midday: Enjoy the refreshing quinoa salad and stay hydrated throughout the day.
+
+Evening: Dinner paired with mindfulness as you enjoy each bite.
+
+Night: Reflect on the week and plan for the next week, making adjustments as needed for continued success.
+
+Physical Activity (Daily)
+
+Take a relaxing 30-minute walk to normalize your end-of-week feelings while setting intentions.
+
+Daily Tips
+
+1. Acknowledge your progress over the week.
+
+2. Share your journey with a friend to build accountability.
+
+3. Keep experimenting with healthy recipes for variety.
+
+Explanation
+
+With consistent effort, your metabolic rate is improving, ensuring your body uses more stored fat for energy!
+
+Summary: You've made an incredible decision by taking this step towards better health and weight loss. This structured plan will encourage your body to naturally lose weight while improving your overall energy and well-being. Stick to this plan and watch how small changes lead to impactful results. You've got this!`;
+
 function getBase64Image(filename: string) {
   try {
     const filePath = path.join(process.cwd(), 'public', 'images', filename);
@@ -21,427 +341,252 @@ function getBase64Image(filename: string) {
   }
 }
 
+function escapeHtml(input: string) {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatPlanToHtml(planText: string) {
+  const lines = planText.split('\n');
+  const introParts: string[] = [];
+  const daySections: string[] = [];
+  const summaryParts: string[] = [];
+
+  let currentTarget = introParts;
+  let currentDayParts: string[] = [];
+  let inList = false;
+
+  const openDaySectionIfNeeded = () => {
+    if (currentTarget !== currentDayParts) {
+      currentDayParts = [];
+      currentTarget = currentDayParts;
+    }
+  };
+
+  const pushCurrentDaySection = () => {
+    if (currentDayParts.length > 0) {
+      daySections.push(`<section class="page-block day-block">${currentDayParts.join('\n')}</section>`);
+      currentDayParts = [];
+    }
+  };
+
+  const closeListIfOpen = () => {
+    if (inList) {
+      currentTarget.push('</ul>');
+      inList = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      closeListIfOpen();
+      continue;
+    }
+
+    // Each day starts a dedicated page block.
+    if (/^DAY\s+\d+\s*[-–—]/i.test(line)) {
+      closeListIfOpen();
+      pushCurrentDaySection();
+      openDaySectionIfNeeded();
+      currentTarget.push(`<h2 class="day-title">${escapeHtml(line)}</h2>`);
+      continue;
+    }
+
+    // Summary should always be in its own page block.
+    if (/^Summary:/i.test(line)) {
+      closeListIfOpen();
+      pushCurrentDaySection();
+      currentTarget = summaryParts;
+      currentTarget.push('<h1 class="section-title">SUMMARY</h1>');
+      currentTarget.push(`<p class="para">${escapeHtml(line.replace(/^Summary:\s*/i, ''))}</p>`);
+      continue;
+    }
+
+    const safeLine = escapeHtml(line);
+
+    if (/^[A-Z][A-Z\s&\-]{4,}$/.test(line)) {
+      closeListIfOpen();
+      currentTarget.push(`<h1 class="section-title">${safeLine}</h1>`);
+      continue;
+    }
+
+    if (/^(Daily Objective|Full Meal Plan|Daily Routine|Physical Activity \(Daily\)|Daily Tips|Explanation)$/i.test(line)) {
+      closeListIfOpen();
+      currentTarget.push(`<h3 class="sub-title">${safeLine}</h3>`);
+      continue;
+    }
+
+    if (/^(\d+\.\s+|[-*]\s+)/.test(line)) {
+      if (!inList) {
+        currentTarget.push('<ul class="list">');
+        inList = true;
+      }
+      const cleanItem = safeLine.replace(/^(\d+\.\s+|[-*]\s+)/, '');
+      currentTarget.push(`<li>${cleanItem}</li>`);
+      continue;
+    }
+
+    closeListIfOpen();
+    currentTarget.push(`<p class="para">${safeLine}</p>`);
+  }
+
+  closeListIfOpen();
+  pushCurrentDaySection();
+
+  const blocks: string[] = [];
+  if (introParts.length > 0) {
+    blocks.push(`<section class="page-block intro-block">${introParts.join('\n')}</section>`);
+  }
+  blocks.push(...daySections);
+  if (summaryParts.length > 0) {
+    blocks.push(`<section class="page-block summary-block">${summaryParts.join('\n')}</section>`);
+  }
+  return blocks.join('\n');
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { 
-      userName = 'Guest', 
-      planType = 'premium', 
-      dailyCalories = 2500, 
-      weight = '80 kg',
-      goal = 'lose weight',
-      activity = 'active',
-      /** When true (e.g. paid basic), include full 7-day meals like premium. */
-      fullMealPlan = false,
-    } = body;
+    const body = await request.json().catch(() => ({} as any));
+    const userName = typeof body?.userName === 'string' && body.userName.trim() ? body.userName.trim() : 'Guest';
+    const planText =
+      typeof body?.planText === 'string' && body.planText.trim()
+        ? body.planText.trim()
+        : DEFAULT_PLAN_TEXT;
 
-    // Load images as base64
-    const img1Cover = getBase64Image('healthy.png'); // Image 1
-    const img2Intro = getBase64Image('fat.png'); // Image 2
-    const img3Diet = getBase64Image('ready.png'); // Image 3
-    const img4Tips = getBase64Image('after-refreshed.png'); // Image 4
-
-    const isPremium = planType === 'premium' || fullMealPlan === true;
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const img1Cover = getBase64Image('healthy.png');
+    const planHtml = formatPlanToHtml(planText);
 
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Your Personalized Weight Loss Plan</title>
+  <title>FitlyAi Personalized Plan</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    
+
+    @page {
+      size: A4;
+      margin: 18mm 14mm 16mm;
+    }
+    @page:first {
+      margin: 0;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
     body {
       font-family: 'Inter', sans-serif;
-      color: #1f2937;
-      line-height: 1.6;
-      background-color: #ffffff;
+      background: #ffffff;
+      color: #111827;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-
-    /* Page Breaks for PDF */
-    .page-break {
-      page-break-before: always;
-    }
-    
-    .section {
-      padding: 40px 50px;
-    }
-
-    /* --- Cover Page --- */
     .cover-page {
-      position: relative;
-      height: 100vh;
       width: 100%;
-      background-image: url('${img1Cover}');
-      background-size: cover;
-      background-position: center;
+      height: 297mm;
+      page-break-after: always;
+      position: relative;
+    }
+    .cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .cover-overlay {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 60px 50px;
-      color: white;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 32px 42px;
+      background: linear-gradient(to top, rgba(0,0,0,0.70), rgba(0,0,0,0.05));
+      color: #fff;
     }
-    .cover-title {
-      font-size: 48px;
+    .cover-heading {
+      font-size: 34px;
       font-weight: 800;
       line-height: 1.1;
-      margin-bottom: 16px;
-    }
-    .cover-subtitle {
-      font-size: 24px;
-      font-weight: 400;
-      margin-bottom: 40px;
-      color: #d1d5db;
+      margin-bottom: 8px;
     }
     .cover-meta {
-      font-size: 16px;
-      font-weight: 500;
-      color: #9ecaed;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      padding-top: 16px;
-    }
-
-    /* --- Global Elements --- */
-    h2 {
-      font-size: 32px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 24px;
-      padding-bottom: 8px;
-      border-bottom: 3px solid #3b82f6; /* Soft blue */
-      display: inline-block;
-    }
-    .text-muted {
-      color: #4b5563;
-      font-size: 18px;
-    }
-    .rounded-image {
-      width: 100%;
-      border-radius: 16px;
-      margin: 24px 0;
-      object-fit: cover;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    /* --- Introduction Section --- */
-    .intro-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      align-items: center;
-    }
-    
-    /* --- Personalized Insights --- */
-    .insights-container {
-      background-color: #f0f9ff; /* Soft blue bg */
-      border-radius: 16px;
-      padding: 32px;
-      margin-top: 24px;
-      border: 1px solid #bae6fd;
-    }
-    .insights-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      margin-top: 24px;
-    }
-    .insight-card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-    .insight-value {
-      font-size: 28px;
-      font-weight: 800;
-      color: #2563eb;
-      margin-top: 8px;
-    }
-    .insight-label {
       font-size: 14px;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      opacity: 0.92;
     }
-
-    /* --- Diet Plan Section --- */
-    .day-card {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-left: 6px solid #10b981; /* Soft green */
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
+    .content {
+      padding: 0;
+    }
+    .page-block {
+      page-break-before: always;
       page-break-inside: avoid;
+      break-inside: avoid-page;
+      min-height: 255mm;
+      padding-bottom: 4mm;
+    }
+    .intro-block {
+      page-break-before: auto;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 18px 0 10px;
+      color: #0f172a;
+      letter-spacing: 0.2px;
+      border-left: 4px solid #2563eb;
+      padding-left: 10px;
+      page-break-after: avoid;
     }
     .day-title {
       font-size: 20px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 16px;
-    }
-    .meal-row {
-      display: flex;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px dashed #f3f4f6;
-    }
-    .meal-row:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    .meal-label {
-      width: 100px;
-      font-weight: 600;
-      color: #374151;
-    }
-    .meal-desc {
-      flex: 1;
-      color: #4b5563;
-    }
-    .blur-overlay {
-      position: relative;
-    }
-    .blur-overlay::after {
-      content: "Unlock Premium to view Days 2-7";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
-      color: #2563eb;
-      border-radius: 12px;
-      z-index: 10;
-    }
-
-    /* --- Tips Section --- */
-    .tips-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-top: 24px;
-    }
-    .tip-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    .tip-icon {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      background: #dbeafe;
-      color: #2563eb;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
       font-weight: 800;
+      margin: 20px 0 10px;
+      color: #0f172a;
+      page-break-after: avoid;
     }
-    .tip-content strong {
-      display: block;
-      font-size: 18px;
-      color: #111827;
-      margin-bottom: 4px;
+    .sub-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 14px 0 6px;
+      color: #1f2937;
+      page-break-after: avoid;
     }
-    .tip-content p {
-      font-size: 14px;
-      color: #4b5563;
+    .para {
+      font-size: 13.5px;
+      line-height: 1.72;
+      color: #374151;
+      margin: 0 0 8px;
+    }
+    .list {
+      margin: 0 0 12px 20px;
+    }
+    .list li {
+      font-size: 13.5px;
+      line-height: 1.68;
+      color: #374151;
+      margin: 2px 0;
     }
   </style>
 </head>
 <body>
-
-  <!-- 1. COVER PAGE -->
   <div class="cover-page">
+    <img src="${img1Cover}" alt="Cover image" class="cover-image" />
     <div class="cover-overlay">
-      <h1 class="cover-title">Your Personalized<br>Weight Loss Plan</h1>
-      <p class="cover-subtitle">Designed specifically for your body and lifestyle</p>
-      <div class="cover-meta">
-        Prepared for: ${userName} &nbsp;&bull;&nbsp; Date: ${dateStr}
-      </div>
+      <div class="cover-heading">Personalized Fat Loss Plan</div>
+      <div class="cover-meta">Prepared for: ${escapeHtml(userName)}</div>
     </div>
   </div>
-
-  <!-- 2. INTRODUCTION & 3. INSIGHTS -->
-  <div class="page-break section">
-    <h2>Understanding Your Body</h2>
-    
-    <div class="intro-grid">
-      <div>
-        <p class="text-muted" style="margin-bottom: 16px;">
-          Body fat is more than just stored energy. Excess visceral fat, particularly around the belly, can impact your energy levels, metabolism, and overall confidence. 
-        </p>
-        <p class="text-muted">
-          Your personalized plan is designed to help you reduce this stubborn fat safely by creating a sustainable caloric deficit while providing the nutrients your body needs to thrive.
-        </p>
-      </div>
-      <img src="${img2Intro}" alt="Body assessment" class="rounded-image" style="margin: 0;">
-    </div>
-
-    <div class="insights-container">
-      <h3 style="font-size: 24px; color: #1e3a8a;">Your Profile & Goals</h3>
-      <p style="color: #3b82f6; margin-top: 8px;">Based on your answers, here is your unique metabolic snapshot:</p>
-      
-      <div class="insights-grid">
-        <div class="insight-card">
-          <div class="insight-label">Target Calories</div>
-          <div class="insight-value">${dailyCalories} <span style="font-size:16px;">kcal</span></div>
-        </div>
-        <div class="insight-card">
-          <div class="insight-label">Primary Goal</div>
-          <div class="insight-value" style="font-size: 22px; text-transform: capitalize;">${goal}</div>
-        </div>
-        <div class="insight-card">
-          <div class="insight-label">Activity Level</div>
-          <div class="insight-value" style="font-size: 20px; text-transform: capitalize;">${activity}</div>
-        </div>
-      </div>
-    </div>
+  <div class="content">
+    ${planHtml}
   </div>
-
-  <!-- 4. DIET PLAN -->
-  <div class="page-break section">
-    <h2>Your Meal Plan</h2>
-    <p class="text-muted" style="margin-bottom: 24px;">Follow these daily meals to reach your target of ${dailyCalories} kcal.</p>
-    
-    <img src="${img3Diet}" alt="Healthy meal prep" class="rounded-image" style="max-height: 250px;">
-
-    <!-- Day 1 (Always Visible) -->
-    <div class="day-card">
-      <div class="day-title">Day 1 – Fresh Start</div>
-      <div class="meal-row">
-        <div class="meal-label">Breakfast</div>
-        <div class="meal-desc">Greek yogurt with mixed berries, chia seeds, and a drizzle of honey</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Lunch</div>
-        <div class="meal-desc">Grilled chicken salad with leafy greens, cherry tomatoes, and olive oil</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Dinner</div>
-        <div class="meal-desc">Baked salmon with roasted asparagus and a side of quinoa</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Snack</div>
-        <div class="meal-desc">A small handful of raw almonds and an apple</div>
-      </div>
-    </div>
-
-    ${isPremium ? `
-    <!-- Days 2-7 (Premium) -->
-    <div class="day-card">
-      <div class="day-title">Day 2 – Plant Power</div>
-      <div class="meal-row">
-        <div class="meal-label">Breakfast</div>
-        <div class="meal-desc">Oatmeal topped with sliced bananas and walnuts</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Lunch</div>
-        <div class="meal-desc">Hearty lentil soup with a slice of whole wheat bread</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Dinner</div>
-        <div class="meal-desc">Tofu stir-fry with brown rice and steamed broccoli</div>
-      </div>
-    </div>
-    
-    <div class="day-card">
-      <div class="day-title">Day 3 – Lean & Clean</div>
-      <div class="meal-row">
-        <div class="meal-label">Breakfast</div>
-        <div class="meal-desc">Two scrambled eggs with spinach and avocado toast</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Lunch</div>
-        <div class="meal-desc">Turkey wrap with mixed greens and a light vinaigrette</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Dinner</div>
-        <div class="meal-desc">Grilled shrimp skewers with zucchini noodles</div>
-      </div>
-    </div>
-    ` : `
-    <!-- Blurred Days 2-7 (Basic) -->
-    <div class="day-card blur-overlay">
-      <div class="day-title">Day 2 – 7</div>
-      <div class="meal-row">
-        <div class="meal-label">Breakfast</div><div class="meal-desc">Hidden meal description goes here</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Lunch</div><div class="meal-desc">Hidden meal description goes here</div>
-      </div>
-      <div class="meal-row">
-        <div class="meal-label">Dinner</div><div class="meal-desc">Hidden meal description goes here</div>
-      </div>
-    </div>
-    `}
-  </div>
-
-  <!-- 5. TIPS & RECOMMENDATIONS -->
-  <div class="page-break section">
-    <h2>Tips for Success</h2>
-    
-    <img src="${img4Tips}" alt="Healthy lifestyle" class="rounded-image" style="max-height: 250px;">
-
-    <div class="tips-grid">
-      <div class="tip-item">
-        <div class="tip-icon">💧</div>
-        <div class="tip-content">
-          <strong>Hydrate Constantly</strong>
-          <p>Aim for at least 2.5 to 3 liters of water per day to boost metabolism and reduce false hunger.</p>
-        </div>
-      </div>
-      <div class="tip-item">
-        <div class="tip-icon">🚫</div>
-        <div class="tip-content">
-          <strong>Limit Added Sugars</strong>
-          <p>Avoid sugary drinks and snacks. Opt for whole fruits when craving something sweet.</p>
-        </div>
-      </div>
-      <div class="tip-item">
-        <div class="tip-icon">💤</div>
-        <div class="tip-content">
-          <strong>Prioritize Sleep</strong>
-          <p>Get 7-8 hours of quality sleep. Poor sleep increases cortisol, which signals your body to store fat.</p>
-        </div>
-      </div>
-      <div class="tip-item">
-        <div class="tip-icon">🔄</div>
-        <div class="tip-content">
-          <strong>Stay Consistent</strong>
-          <p>Results take time. Stick to the plan 80% of the time, and allow 20% flexibility for life's events.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>
     `;
@@ -457,6 +602,7 @@ export async function POST(request: Request) {
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
+      preferCSSPageSize: true,
       printBackground: true,
       margin: {
         top: '0px',

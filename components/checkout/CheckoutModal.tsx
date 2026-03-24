@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Flame, Lock, CreditCard } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { setIsPaid, setStage, closeCheckoutModal } from '@/features/chatbot/chatbotSlice'
+import { addMessage, setIsPaid, setStage, closeCheckoutModal } from '@/features/chatbot/chatbotSlice'
 
 async function downloadPersonalizedPdf(params: {
   userName: string
@@ -73,6 +73,13 @@ export function CheckoutModal() {
       dispatch(setIsPaid(true))
       dispatch(closeCheckoutModal())
       dispatch(setStage('questioning'))
+      if (planType === 'premium') {
+        dispatch(addMessage({
+          role: 'assistant',
+          content: 'Payment successful. Premium access unlocked. You can start chatting now.',
+          type: 'text',
+        }))
+      }
 
       if (planType === 'basic') {
         try {

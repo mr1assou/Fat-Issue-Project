@@ -210,6 +210,11 @@ export default function ChatbotPage() {
   // Restore minimal session so reload keeps user on /chatbot.
   useEffect(() => {
     if (typeof window === 'undefined') return
+    // If store already has runtime state (SPA navigation), don't override it.
+    if (planType) {
+      setIsSessionHydrated(true)
+      return
+    }
 
     const raw = window.localStorage.getItem(CHATBOT_SESSION_STORAGE_KEY)
     if (!raw) {
@@ -240,7 +245,7 @@ export default function ChatbotPage() {
     } finally {
       setIsSessionHydrated(true)
     }
-  }, [dispatch])
+  }, [dispatch, planType])
 
   // Persist minimal session used for page reload continuity.
   useEffect(() => {
@@ -302,12 +307,6 @@ export default function ChatbotPage() {
     if (planType === 'premium' && !isAuthenticated) router.replace('/')
   }, [planType, isAuthenticated, router, isSessionHydrated])
 
-  // Premium payment should always use the shared checkout modal.
-  useEffect(() => {
-    if (!isSessionHydrated) return
-    if (requiresPremiumPayment) dispatch(openCheckoutModal())
-  }, [requiresPremiumPayment, dispatch, isSessionHydrated])
-
   // Scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -362,7 +361,11 @@ export default function ChatbotPage() {
   // ── Handle user send ────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
-    if (!text || ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment) return
+    if (!text || ['paywall', 'upgrade', 'processing'].includes(stage)) return
+    if (requiresPremiumPayment) {
+      dispatch(openCheckoutModal())
+      return
+    }
 
     dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
     setInputValue('')
@@ -433,7 +436,7 @@ export default function ChatbotPage() {
 
   const QUESTIONS = planType === 'basic' ? BASIC_QUESTIONS : PREMIUM_QUESTIONS
   const totalQ    = QUESTIONS.length
-  const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment
+  const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage)
 
   if (!isSessionHydrated) return null
   if (!planType) return null
@@ -685,7 +688,6 @@ export default function ChatbotPage() {
                   isInputDisabled
                     ? stage === 'processing' ? 'Generating your plan...'
                     : stage === 'upgrade'    ? 'Upgrade to continue'
-                    : requiresPremiumPayment ? 'Complete premium payment to start chatting'
                     : 'Complete payment to continue'
                     : stage === 'complete'   ? 'Ask a follow-up question...'
                     : 'Type your answer...'
