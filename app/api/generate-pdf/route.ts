@@ -498,7 +498,7 @@ export async function POST(request: Request) {
 
     @page {
       size: A4;
-      margin: 18mm 14mm 16mm;
+      margin: 10mm 13mm 10mm;
     }
     @page:first {
       margin: 0;
@@ -552,10 +552,9 @@ export async function POST(request: Request) {
     }
     .page-block {
       page-break-before: always;
-      page-break-inside: avoid;
-      break-inside: avoid-page;
-      min-height: 255mm;
-      padding-bottom: 4mm;
+    }
+    .day-block {
+      break-after: page;  /* force each day to fill exactly one page */
     }
     .intro-block {
       page-break-before: auto;
@@ -571,9 +570,9 @@ export async function POST(request: Request) {
       page-break-after: avoid;
     }
     .day-title {
-      font-size: 19px;
+      font-size: 21px;
       font-weight: 800;
-      margin: 0 0 20px;
+      margin: 0 0 16px;
       padding: 14px 20px;
       color: #fff;
       background: linear-gradient(135deg, #1e3a8a, #2563eb);
@@ -585,10 +584,10 @@ export async function POST(request: Request) {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 12.5px;
+      font-size: 13.5px;
       font-weight: 700;
-      margin: 22px 0 10px;
-      padding: 9px 14px;
+      margin: 18px 0 8px;
+      padding: 8px 14px;
       color: #1e40af;
       background: #eff6ff;
       border-left: 4px solid #2563eb;
@@ -614,40 +613,40 @@ export async function POST(request: Request) {
     .meal-row {
       display: flex;
       align-items: baseline;
-      gap: 8px;
-      margin: 6px 0;
-      padding: 8px 12px;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 10px 14px;
       background: #f8fafc;
       border-left: 3px solid #93c5fd;
-      border-radius: 5px;
+      border-radius: 6px;
     }
     .meal-label {
-      font-size: 12.5px;
+      font-size: 13.5px;
       font-weight: 700;
       color: #1e40af;
-      min-width: 68px;
+      min-width: 72px;
       flex-shrink: 0;
     }
     .meal-text {
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.6;
       color: #374151;
     }
     .para {
-      font-size: 13.5px;
-      line-height: 1.75;
+      font-size: 14px;
+      line-height: 1.7;
       color: #374151;
-      margin: 0 0 8px;
+      margin: 0 0 10px;
     }
     .list {
-      margin: 4px 0 10px 20px;
+      margin: 6px 0 14px 20px;
       padding: 0;
     }
     .list li {
-      font-size: 13px;
-      line-height: 1.68;
+      font-size: 13.5px;
+      line-height: 1.65;
       color: #374151;
-      margin: 3px 0;
+      margin: 4px 0;
     }
   </style>
 </head>
