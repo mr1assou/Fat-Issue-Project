@@ -20,7 +20,7 @@ const PREMIUM_FEATURES = [
   'Full personalized 7-day plan',
   'Daily calorie & macro breakdown',
   'Downloadable PDF report',
-  'Unlimited chatbot access',
+  'Chatbot access + up to 2 customized plan generations',
   'Personalized recommendations',
 ]
 

@@ -6,15 +6,21 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import {
   addMessage,
   openModal,
+  openCheckoutModal,
+  resetConversation,
+  setPlanType,
   setStage,
-  setUserAnswer,
-  nextQuestion,
-  setDailyCalories,
   setIsPaid,
 } from '@/features/chatbot/chatbotSlice'
+import { loginSuccess } from '@/features/auth/authSlice'
 import { Header } from '@/components/layout/Header'
 import { CheckoutModal } from '@/components/checkout/CheckoutModal'
 import { Flame, ArrowLeft, Send, Download, RefreshCw, CheckCircle2, Zap } from 'lucide-react'
+
+const CHATBOT_CONTEXT_STORAGE_KEY = 'chatbot-premium-context-v1'
+const CHATBOT_SESSION_STORAGE_KEY = 'chatbot-session-v1'
+const CHATBOT_WELCOME_MESSAGE =
+  "Hey 👋 I’m your AI nutrition assistant.\nI’ll help you create a personalized plan to lose body fat and feel better in your body."
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 const BASIC_QUESTIONS = [
@@ -119,6 +125,68 @@ function downloadPlan(content: string) {
   URL.revokeObjectURL(url)
 }
 
+function cleanAssistantText(content: string) {
+  return content
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[—–]/g, '-')
+    .replace(/\*/g, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function FormattedAssistantContent({ content }: { content: string }) {
+  const cleaned = cleanAssistantText(content)
+  const lines = cleaned.split('\n')
+
+  return (
+    <div className="space-y-2">
+      {lines.map((rawLine, idx) => {
+        const line = rawLine.trim()
+        if (!line) return <div key={`empty-${idx}`} className="h-1" />
+
+        if (/^---+$/.test(line)) {
+          return <hr key={`hr-${idx}`} className="my-2 border-border/60" />
+        }
+
+        const markdownHeading = line.match(/^#{1,6}\s+(.*)$/)
+        if (markdownHeading) {
+          return (
+            <p key={`md-h-${idx}`} className="mt-3 text-sm font-semibold text-foreground">
+              {markdownHeading[1]}
+            </p>
+          )
+        }
+
+        const numberedSection = line.match(/^(\d+)\.\s+(.*)$/)
+        if (numberedSection) {
+          return (
+            <p key={`num-${idx}`} className="mt-3 text-sm font-semibold text-foreground">
+              {numberedSection[1]}. {numberedSection[2]}
+            </p>
+          )
+        }
+
+        const bulletItem = line.match(/^[-*]\s+(.*)$/)
+        if (bulletItem) {
+          return (
+            <div key={`bullet-${idx}`} className="flex items-start gap-2 text-sm text-foreground">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/70" />
+              <p>{bulletItem[1]}</p>
+            </div>
+          )
+        }
+
+        return (
+          <p key={`p-${idx}`} className="text-sm leading-relaxed text-foreground">
+            {line}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ChatbotPage() {
   const dispatch = useAppDispatch()
@@ -132,155 +200,204 @@ export default function ChatbotPage() {
   const [inputValue, setInputValue]   = useState('')
   const [isTyping, setIsTyping]       = useState(false)
   const [planContent, setPlanContent] = useState('')
-  const [cardName, setCardName] = useState('')
-  const [cardNumber, setCardNumber] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [cvc, setCvc] = useState('')
-  const [isPaying, setIsPaying] = useState(false)
-  const [paymentError, setPaymentError] = useState('')
+  const [isSessionHydrated, setIsSessionHydrated] = useState(false)
+  const isHardReloadRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef       = useRef<HTMLInputElement>(null)
 
   const requiresPremiumPayment = planType === 'premium' && !isPaid
 
+  // Restore minimal session so reload keeps user on /chatbot.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const raw = window.localStorage.getItem(CHATBOT_SESSION_STORAGE_KEY)
+    if (!raw) {
+      setIsSessionHydrated(true)
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as {
+        planType?: 'basic' | 'premium' | null
+        isPaid?: boolean
+        isAuthenticated?: boolean
+        user?: { id: string; email: string; name: string; plan: 'silver' | 'gold' | null }
+      }
+
+      if (parsed.planType === 'basic' || parsed.planType === 'premium') {
+        dispatch(setPlanType(parsed.planType))
+        dispatch(setStage('questioning'))
+      }
+      if (typeof parsed.isPaid === 'boolean') {
+        dispatch(setIsPaid(parsed.isPaid))
+      }
+      if (parsed.isAuthenticated && parsed.user) {
+        dispatch(loginSuccess(parsed.user))
+      }
+    } catch {
+      window.localStorage.removeItem(CHATBOT_SESSION_STORAGE_KEY)
+    } finally {
+      setIsSessionHydrated(true)
+    }
+  }, [dispatch])
+
+  // Persist minimal session used for page reload continuity.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isSessionHydrated) return
+
+    window.localStorage.setItem(
+      CHATBOT_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        planType,
+        isPaid,
+        isAuthenticated,
+        user,
+      })
+    )
+  }, [planType, isPaid, isAuthenticated, user, isSessionHydrated])
+
+  // Mark hard refresh/close so we can keep session on reload.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleBeforeUnload = () => {
+      isHardReloadRef.current = true
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [])
+
+  // Leaving /chatbot via app navigation should start fresh next time.
+  useEffect(() => {
+    return () => {
+      if (typeof window === 'undefined') return
+      if (isHardReloadRef.current) return
+
+      window.localStorage.removeItem(CHATBOT_CONTEXT_STORAGE_KEY)
+      dispatch(resetConversation())
+    }
+  }, [dispatch])
+
   // Guard: no planType → send home
   useEffect(() => {
+    if (!isSessionHydrated) return
     if (!planType) router.replace('/')
-  }, [planType, router])
+  }, [planType, router, isSessionHydrated])
 
   // Basic questionnaire + paywall live on /basic-plan-funnel, not here
   useEffect(() => {
+    if (!isSessionHydrated) return
     if (planType === 'basic' && !isPaid) {
       router.replace('/basic-plan-funnel')
     }
-  }, [planType, isPaid, router])
+  }, [planType, isPaid, router, isSessionHydrated])
 
   // Guard: premium requires login
   useEffect(() => {
+    if (!isSessionHydrated) return
     if (planType === 'premium' && !isAuthenticated) router.replace('/')
-  }, [planType, isAuthenticated, router])
+  }, [planType, isAuthenticated, router, isSessionHydrated])
+
+  // Premium payment should always use the shared checkout modal.
+  useEffect(() => {
+    if (!isSessionHydrated) return
+    if (requiresPremiumPayment) dispatch(openCheckoutModal())
+  }, [requiresPremiumPayment, dispatch, isSessionHydrated])
 
   // Scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  // ── Boot greeting ───────────────────────────────────────────────────────────
+  // Restore saved chat context on first load.
   useEffect(() => {
-    if (planType === 'basic' && !isPaid) return
-    if (planType && messages.length === 0 && stage === 'questioning') {
-      const firstName = user?.name?.split(' ')[0] ?? 'there'
-      const greeting  = planType === 'premium'
-        ? `Hey ${firstName}! 👋 I'm your FitlyAi coach. Let's build your personalized weight-loss plan — I just need to ask you a few quick questions. Ready? 🔥`
-        : `Hey! 👋 Welcome to FitlyAi. I'll give you a quick calorie estimate to get you started. No account needed! Let's go.`
+    if (messages.length > 0 || typeof window === 'undefined') return
 
-      setTimeout(() => {
-        dispatch(addMessage({ role: 'assistant', content: greeting, type: 'text' }))
-        const QUESTIONS = planType === 'basic' ? BASIC_QUESTIONS : PREMIUM_QUESTIONS
-        setTimeout(() => {
-          dispatch(addMessage({ role: 'assistant', content: QUESTIONS[0].text, type: 'text' }))
-        }, 900)
-      }, 400)
+    const raw = window.localStorage.getItem(CHATBOT_CONTEXT_STORAGE_KEY)
+    if (!raw) return
+
+    try {
+      const parsed = JSON.parse(raw) as Array<{ role: 'user' | 'assistant'; content: string }>
+      if (!Array.isArray(parsed)) return
+
+      for (const item of parsed) {
+        if (
+          item &&
+          (item.role === 'user' || item.role === 'assistant') &&
+          typeof item.content === 'string' &&
+          item.content.trim().length > 0
+        ) {
+          dispatch(addMessage({ role: item.role, content: item.content, type: 'text' }))
+        }
+      }
+    } catch {
+      window.localStorage.removeItem(CHATBOT_CONTEXT_STORAGE_KEY)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planType, isPaid])
+  }, [dispatch, messages.length])
 
-  // ── Bot reply util ──────────────────────────────────────────────────────────
-  const botReply = useCallback(
-    (content: string, delay = 700, type: Message['type'] = 'text') => {
-      setIsTyping(true)
-      setTimeout(() => { setIsTyping(false); dispatch(addMessage({ role: 'assistant', content, type })) }, delay)
-    },
-    [dispatch]
-  )
+  // Show first welcome message when entering chatbot.
+  useEffect(() => {
+    if (!isSessionHydrated) return
+    if (!planType) return
+    if (messages.length > 0) return
+
+    dispatch(addMessage({ role: 'assistant', content: CHATBOT_WELCOME_MESSAGE, type: 'text' }))
+  }, [dispatch, isSessionHydrated, planType, messages.length])
+
+  // Persist chat context after each message update.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const compactHistory = messages
+      .filter((m) => (m.role === 'user' || m.role === 'assistant') && !!m.content?.trim())
+      .map((m) => ({ role: m.role, content: m.content }))
+
+    window.localStorage.setItem(CHATBOT_CONTEXT_STORAGE_KEY, JSON.stringify(compactHistory))
+  }, [messages])
 
   // ── Handle user send ────────────────────────────────────────────────────────
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = inputValue.trim()
     if (!text || ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment) return
 
     dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
     setInputValue('')
+    setIsTyping(true)
 
-    const QUESTIONS = planType === 'basic' ? BASIC_QUESTIONS : PREMIUM_QUESTIONS
-    const currentQ  = QUESTIONS[questionStep]
-    if (currentQ) dispatch(setUserAnswer({ key: currentQ.key, value: text }))
-    dispatch(nextQuestion())
+    try {
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }))
 
-    const nextStep = questionStep + 1
+      const response = await fetch('/api/create-skill/chatbot-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...history, { role: 'user', content: text }],
+        }),
+      })
 
-    if (nextStep < QUESTIONS.length) {
-      botReply(QUESTIONS[nextStep].text, 800)
-    } else {
-      // ── All questions answered → insight ──────────────────────────────────
-      dispatch(setStage('insight'))
-      const answers = { ...userAnswers, [currentQ?.key ?? 'weight']: text }
-      const cals    = estimateCalories(answers.weight ?? userAnswers.weight, answers.activity ?? userAnswers.activity)
-      dispatch(setDailyCalories(cals))
+      const data = await response.json()
+      const reply =
+        typeof data?.reply === 'string' && data.reply.trim()
+          ? data.reply.trim()
+          : "I couldn't generate a response. Please try again."
 
-      const goalLine = (answers.goal ?? userAnswers.goal ?? '').toLowerCase().includes('lose')
-        ? 'With a small deficit, you could realistically lose 0.5–1 kg per week. 💪'
-        : 'I can help you stay within this range to achieve your goal. 💪'
-
-      botReply(
-        `Based on your profile, your estimated daily calorie needs are around **${cals} kcal**. ${goalLine}`,
-        1000
-      )
-
-      // ── Branch: basic → upgrade wall, premium → paywall ───────────────────
-      if (planType === 'basic') {
-        setTimeout(() => {
-          dispatch(setStage('upgrade'))
-          setIsTyping(true)
-          setTimeout(() => {
-            setIsTyping(false)
-            dispatch(addMessage({
-              role: 'assistant',
-              content: `You've reached the limit of the free plan. To generate your full 7-day personalized meal plan and download it as a PDF, unlock Premium.`,
-              type: 'upgrade',
-            }))
-          }, 900)
-        }, 2800)
-      } else {
-        if (isPaid) {
-          // User already paid on the /checkout page upfront
-          setTimeout(() => {
-            dispatch(setStage('processing'))
-            dispatch(addMessage({ role: 'assistant', content: '✅ Perfect! I have all the info I need. Generating your personalized plan right now...', type: 'text' }))
-            setIsTyping(true)
-            setTimeout(() => {
-              const plan = buildPlan(userAnswers as Record<string, string>)
-              setPlanContent(plan)
-              setIsTyping(false)
-              dispatch(setStage('complete'))
-              dispatch(addMessage({ role: 'assistant', content: plan, type: 'plan' }))
-              setTimeout(() => {
-                dispatch(addMessage({
-                  role: 'assistant',
-                  content: `🎯 Your plan is ready! Need help with a specific day, meal swaps, or have questions? Just ask — I'm here all week! 💬`,
-                  type: 'upsell',
-                }))
-              }, 1500)
-            }, 3000)
-          }, 1500)
-        } else {
-          // Fallback paywall if they somehow skipped checkout
-          setTimeout(() => {
-            dispatch(setStage('paywall'))
-            setIsTyping(true)
-            setTimeout(() => {
-              setIsTyping(false)
-              dispatch(addMessage({
-                role: 'assistant',
-                content: `I'm ready to generate your full personalized plan! This includes:\n• A complete **7-day meal plan**\n• Daily **calorie & macro breakdown**\n• Expert **tips & recommendations**\n• A **downloadable summary**`,
-                type: 'paywall',
-              }))
-            }, 1200)
-          }, 3000)
-        }
-      }
+      dispatch(addMessage({ role: 'assistant', content: reply, type: 'text' }))
+    } catch {
+      dispatch(addMessage({
+        role: 'assistant',
+        content: 'Something went wrong while contacting the AI service. Please try again.',
+        type: 'text',
+      }))
+    } finally {
+      setIsTyping(false)
     }
-  }, [inputValue, stage, planType, questionStep, dispatch, botReply, userAnswers, requiresPremiumPayment, isPaid])
+  }, [inputValue, stage, requiresPremiumPayment, dispatch, messages])
 
 
   // ── Payment handler ─────────────────────────────────────────────────────────
@@ -318,66 +435,91 @@ export default function ChatbotPage() {
   const totalQ    = QUESTIONS.length
   const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage) || requiresPremiumPayment
 
+  if (!isSessionHydrated) return null
   if (!planType) return null
   if (planType === 'basic' && !isPaid) return null
 
   return (
     <div className="flex h-screen flex-col bg-background">
-
-      {/* ── Site Header ── */}
       <Header />
-      <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-0 flex-1">
+      <aside className="hidden w-72 shrink-0 border-r border-border/40 bg-background/80 p-4 backdrop-blur md:flex md:flex-col">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => router.push('/')}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <Flame className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">FitlyAi Coach</p>
-              <p className="flex items-center gap-1 text-xs text-green-500">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                Online · {planType === 'premium' ? 'Premium' : 'Free'} mode
-              </p>
-            </div>
+          {planType === 'premium' ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Zap className="h-3.5 w-3.5" /> Premium
+            </span>
+          ) : (
+            <button
+              onClick={() => dispatch(openModal())}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-transparent px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+            >
+              <Zap className="h-3.5 w-3.5" /> Upgrade
+            </button>
+          )}
+        </div>
+
+        <div className="mt-6 flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Flame className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">FitlyAi Coach</p>
+            <p className="flex items-center gap-1 text-xs text-green-500">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+              Online · {planType === 'premium' ? 'Premium' : 'Free'} mode
+            </p>
           </div>
         </div>
 
-        {/* Plan badge */}
-        {planType === 'premium' ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <Zap className="h-3.5 w-3.5" /> Premium
-          </span>
-        ) : (
-          <button
-            onClick={() => dispatch(openModal())}
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-transparent px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
-          >
-            <Zap className="h-3.5 w-3.5" /> Upgrade
-          </button>
-        )}
-      </header>
+      </aside>
 
-      {/* ── Progress bar ── */}
-      {stage === 'questioning' && (
-        <div className="h-0.5 w-full bg-secondary">
-          <div
-            className="h-full bg-primary transition-all duration-500"
-            style={{ width: `${Math.min((questionStep / totalQ) * 100, 100)}%` }}
-          />
-        </div>
-      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md md:hidden">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <Flame className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">FitlyAi Coach</p>
+                <p className="flex items-center gap-1 text-xs text-green-500">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                  Online · {planType === 'premium' ? 'Premium' : 'Free'} mode
+                </p>
+              </div>
+            </div>
+          </div>
+          {planType === 'premium' ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Zap className="h-3.5 w-3.5" /> Premium
+            </span>
+          ) : (
+            <button
+              onClick={() => dispatch(openModal())}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-transparent px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+            >
+              <Zap className="h-3.5 w-3.5" /> Upgrade
+            </button>
+          )}
+        </header>
 
-      {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-        <div className="mx-auto max-w-2xl space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+          <div className="mx-auto max-w-2xl space-y-4">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div key={msg.id} className={`flex animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-300 ease-out fill-mode-both ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
 
               {msg.role === 'assistant' && (
                 <div className="mr-2 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -428,10 +570,10 @@ export default function ChatbotPage() {
                         <p className="mt-0.5 text-xs text-muted-foreground">One-time · Instant access</p>
                       </div>
                       <button
-                        onClick={handlePayment}
+                        onClick={() => dispatch(openCheckoutModal())}
                         className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.98]"
                       >
-                        ⚡ Generate My Plan (9$)
+                        ⚡ Continue to Checkout (9$)
                       </button>
                     </div>
                   </div>
@@ -480,7 +622,11 @@ export default function ChatbotPage() {
                         : 'rounded-tl-sm bg-secondary text-foreground'
                     }`}
                   >
-                    {msg.content.replace(/\*\*(.*?)\*\*/g, '$1')}
+                    {msg.role === 'assistant' ? (
+                      <FormattedAssistantContent content={msg.content} />
+                    ) : (
+                      msg.content.replace(/\*\*(.*?)\*\*/g, '$1')
+                    )}
                   </div>
                 )}
               </div>
@@ -495,17 +641,17 @@ export default function ChatbotPage() {
 
           {/* Typing indicator */}
           {isTyping && (
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-300 ease-out fill-mode-both">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Flame className="h-3.5 w-3.5 text-primary" />
+                <Flame className="h-3.5 w-3.5 text-primary animate-pulse" />
               </div>
-              <div className="rounded-2xl rounded-tl-sm bg-secondary px-4 py-3">
-                <div className="flex gap-1">
+              <div className="rounded-2xl rounded-tl-sm bg-secondary px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-1.5 h-4">
                   {[0, 1, 2].map((i) => (
                     <span
                       key={i}
-                      className="inline-block h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce"
-                      style={{ animationDelay: `${i * 0.15}s` }}
+                      className="inline-block h-2 w-2 rounded-full bg-primary/70 animate-bounce"
+                      style={{ animationDelay: `${i * 0.15}s`, animationDuration: '0.8s' }}
                     />
                   ))}
                 </div>
@@ -513,170 +659,63 @@ export default function ChatbotPage() {
             </div>
           )}
 
-          <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-      </div>
 
-      {/* ── Input bar ── */}
-      <div className="shrink-0 border-t border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
-        <div className="mx-auto max-w-2xl">
-          <div className="flex items-center gap-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (stage === 'complete') {
-                    handleFollowUp()
-                  } else {
-                    handleSend()
+        <div className="shrink-0 border-t border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
+          <div className="mx-auto max-w-2xl">
+            <div className="flex items-center gap-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (stage === 'complete') {
+                      handleFollowUp()
+                    } else {
+                      handleSend()
+                    }
                   }
+                }}
+                disabled={isInputDisabled}
+                placeholder={
+                  isInputDisabled
+                    ? stage === 'processing' ? 'Generating your plan...'
+                    : stage === 'upgrade'    ? 'Upgrade to continue'
+                    : requiresPremiumPayment ? 'Complete premium payment to start chatting'
+                    : 'Complete payment to continue'
+                    : stage === 'complete'   ? 'Ask a follow-up question...'
+                    : 'Type your answer...'
                 }
-              }}
-              disabled={isInputDisabled}
-              placeholder={
-                isInputDisabled
-                  ? stage === 'processing' ? 'Generating your plan...'
-                  : stage === 'upgrade'    ? 'Upgrade to continue'
-                  : requiresPremiumPayment ? 'Complete premium payment to start chatting'
-                  : 'Complete payment to continue'
-                  : stage === 'complete'   ? 'Ask a follow-up question...'
-                  : 'Type your answer...'
-              }
-              className="flex-1 rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary/50 focus:bg-background disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <button
-              onClick={stage === 'complete' ? handleFollowUp : handleSend}
-              disabled={isInputDisabled || !inputValue.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {stage === 'processing'
-                ? <RefreshCw className="h-4 w-4 animate-spin" />
-                : <Send className="h-4 w-4" />}
-            </button>
-          </div>
-          <p className="mt-2 text-center text-[10px] text-muted-foreground/50">
-            FitlyAi · AI-powered · For informational purposes only
-          </p>
-        </div>
-      </div>
-
-      {/* ── Premium payment gate (frontend-only) ── */}
-      {requiresPremiumPayment && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
-            <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 px-5 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Stripe checkout</p>
-              <h3 className="mt-1 text-lg font-bold text-foreground">Unlock Premium Access</h3>
-              <p className="text-sm text-muted-foreground">Pay 9$ once to start chatting with the premium coach.</p>
-            </div>
-
-            <form
-              className="space-y-3 px-5 py-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setPaymentError('')
-
-                if (!cardName.trim() || cardNumber.replace(/\s/g, '').length < 12 || !expiry.trim() || cvc.trim().length < 3) {
-                  setPaymentError('Please fill in valid card details.')
-                  return
-                }
-
-                setIsPaying(true)
-                setTimeout(() => {
-                  dispatch(setIsPaid(true))
-                  dispatch(setStage('questioning'))
-                  dispatch(addMessage({
-                    role: 'assistant',
-                    content: '✅ Payment successful! Premium access unlocked. You can now start chatting.',
-                    type: 'text',
-                  }))
-                  setIsPaying(false)
-                }, 1400)
-              }}
-            >
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Cardholder Name</label>
-                <input
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                  placeholder="Alex Johnson"
-                  className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Card Number</label>
-                <input
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  placeholder="4242 4242 4242 4242"
-                  className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Expiry</label>
-                  <input
-                    value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
-                    placeholder="MM/YY"
-                    className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">CVC</label>
-                  <input
-                    value={cvc}
-                    onChange={(e) => setCvc(e.target.value)}
-                    placeholder="123"
-                    className="w-full rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-sm outline-none focus:border-primary/50"
-                  />
-                </div>
-              </div>
-
-              {paymentError && <p className="text-xs text-destructive">{paymentError}</p>}
-
+                className="flex-1 rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary/50 focus:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+              />
               <button
-                type="submit"
-                disabled={isPaying}
-                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 disabled:opacity-60"
+                onClick={stage === 'complete' ? handleFollowUp : handleSend}
+                disabled={isInputDisabled || !inputValue.trim()}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {isPaying ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Processing payment...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4" />
-                    Pay 9$ and Continue
-                  </>
-                )}
+                {stage === 'processing'
+                  ? <RefreshCw className="h-4 w-4 animate-spin" />
+                  : <Send className="h-4 w-4" />}
               </button>
-
-              <p className="text-center text-[11px] text-muted-foreground">Frontend demo only (no backend/real Stripe charge).</p>
-            </form>
+            </div>
+            <p className="mt-2 text-center text-[10px] text-muted-foreground/50">
+              FitlyAi · AI-powered · For informational purposes only
+            </p>
           </div>
         </div>
-      )}
-      <CheckoutModal />
+
+        <CheckoutModal />
+      </div>
+      </div>
     </div>
   )
 
   function handleFollowUp() {
-    const text = inputValue.trim()
-    if (!text) return
-    dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
-    setInputValue('')
-    botReply(
-      `Great question! For your profile — ${userAnswers.weight ?? 'your weight'}, goal: ${userAnswers.goal ?? 'your goal'} — staying consistent with the plan is key. Feel free to ask about meal swaps, portions, or tips anytime! 💪`,
-      900
-    )
+    void handleSend()
   }
 }
 
