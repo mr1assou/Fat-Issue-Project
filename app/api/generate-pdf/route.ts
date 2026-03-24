@@ -350,6 +350,19 @@ function escapeHtml(input: string) {
     .replace(/'/g, '&#039;');
 }
 
+// Known day sub-section labels — match regardless of bullet/number prefix
+const SECTION_NAME_RE = /^(Daily Objective|Full Meal Plan|Daily Routine|Physical Activity(\s*\(Daily\))?|Daily Tips|Explanation)$/i;
+// Meal lines that start with Breakfast:/Lunch:/Dinner:/Snacks:
+const MEAL_LINE_RE = /^(Breakfast|Lunch|Dinner|Snacks?):\s*(.*)/i;
+// Strip any leading bullets, markdown #, or numbers from a line
+function stripMarkers(line: string): string {
+  return line
+    .replace(/^[#]+\s*/, '')      // ## ### headings
+    .replace(/^[•\-*]+\s*/, '')   // bullets • - *
+    .replace(/^\d+\.\s*/, '')     // numbered: 1.
+    .trim();
+}
+
 function formatPlanToHtml(planText: string) {
   const lines = planText.split('\n');
   const introParts: string[] = [];
@@ -359,94 +372,106 @@ function formatPlanToHtml(planText: string) {
   let currentTarget = introParts;
   let currentDayParts: string[] = [];
   let inList = false;
+  let sectionNum = 0;
 
-  const openDaySectionIfNeeded = () => {
+  const closeList = () => { if (inList) { currentTarget.push('</ul>'); inList = false; } };
+
+  const ensureInDay = () => {
     if (currentTarget !== currentDayParts) {
-      currentDayParts = [];
-      currentTarget = currentDayParts;
+      currentDayParts = []; currentTarget = currentDayParts; sectionNum = 0;
     }
   };
 
-  const pushCurrentDaySection = () => {
+  const pushDay = () => {
+    closeList();
     if (currentDayParts.length > 0) {
       daySections.push(`<section class="page-block day-block">${currentDayParts.join('\n')}</section>`);
-      currentDayParts = [];
-    }
-  };
-
-  const closeListIfOpen = () => {
-    if (inList) {
-      currentTarget.push('</ul>');
-      inList = false;
+      currentDayParts = []; sectionNum = 0;
     }
   };
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+    if (!line) { closeList(); continue; }
 
-    if (!line) {
-      closeListIfOpen();
+    // Skip pure separator lines --- === ~~~
+    if (/^[-=~]{3,}$/.test(line)) continue;
+
+    // ── Day banner (DAY 1 - / DAY 1 – / ## DAY 1)
+    if (/^(#+\s*)?DAY\s+\d+\s*[-–—]/i.test(line)) {
+      pushDay();
+      ensureInDay();
+      const title = stripMarkers(line);
+      currentTarget.push(`<h2 class="day-title">${escapeHtml(title)}</h2>`);
       continue;
     }
 
-    // Each day starts a dedicated page block.
-    if (/^DAY\s+\d+\s*[-–—]/i.test(line)) {
-      closeListIfOpen();
-      pushCurrentDaySection();
-      openDaySectionIfNeeded();
-      currentTarget.push(`<h2 class="day-title">${escapeHtml(line)}</h2>`);
-      continue;
-    }
-
-    // Summary should always be in its own page block.
+    // ── Summary page
     if (/^Summary:/i.test(line)) {
-      closeListIfOpen();
-      pushCurrentDaySection();
+      closeList(); pushDay();
       currentTarget = summaryParts;
       currentTarget.push('<h1 class="section-title">SUMMARY</h1>');
       currentTarget.push(`<p class="para">${escapeHtml(line.replace(/^Summary:\s*/i, ''))}</p>`);
       continue;
     }
 
-    const safeLine = escapeHtml(line);
+    // Strip all prefix markers to get the raw content
+    const content = stripMarkers(line);
+    const safeContent = escapeHtml(content);
+    // Did this line originally have a bullet/number marker?
+    const hadMarker = /^([#•\-*]|\d+\.)/.test(line);
 
-    if (/^[A-Z][A-Z\s&\-]{4,}$/.test(line)) {
-      closeListIfOpen();
-      currentTarget.push(`<h1 class="section-title">${safeLine}</h1>`);
+    // ── ALL-CAPS intro headings (INTRODUCTION, USER PROFILE ANALYSIS…)
+    //    Only on lines with NO bullet marker
+    if (!hadMarker && /^[A-Z][A-Z\s&\-]{4,}$/.test(content)) {
+      closeList();
+      currentTarget.push(`<h1 class="section-title">${safeContent}</h1>`);
       continue;
     }
 
-    if (/^(Daily Objective|Full Meal Plan|Daily Routine|Physical Activity \(Daily\)|Daily Tips|Explanation)$/i.test(line)) {
-      closeListIfOpen();
-      currentTarget.push(`<h3 class="sub-title">${safeLine}</h3>`);
+    // ── KNOWN SECTION NAMES → highlighted numbered strip
+    //    Matches whether written as plain, bullet, or ## heading
+    if (SECTION_NAME_RE.test(content)) {
+      closeList();
+      sectionNum++;
+      currentTarget.push(
+        `<div class="section-heading"><span class="section-num">${sectionNum}</span>${safeContent}</div>`
+      );
       continue;
     }
 
-    if (/^(\d+\.\s+|[-*]\s+)/.test(line)) {
-      if (!inList) {
-        currentTarget.push('<ul class="list">');
-        inList = true;
-      }
-      const cleanItem = safeLine.replace(/^(\d+\.\s+|[-*]\s+)/, '');
-      currentTarget.push(`<li>${cleanItem}</li>`);
+    // ── Meal lines: "Breakfast: text" / "Lunch: text" etc.
+    const mealMatch = content.match(MEAL_LINE_RE);
+    if (mealMatch) {
+      closeList();
+      const label = escapeHtml(mealMatch[1]);
+      const text  = escapeHtml(mealMatch[2]);
+      currentTarget.push(
+        `<div class="meal-row"><span class="meal-label">${label}</span><span class="meal-text">${text}</span></div>`
+      );
       continue;
     }
 
-    closeListIfOpen();
-    currentTarget.push(`<p class="para">${safeLine}</p>`);
+    // ── Bullet / numbered items that are NOT section names → list
+    if (hadMarker) {
+      if (!inList) { currentTarget.push('<ul class="list">'); inList = true; }
+      currentTarget.push(`<li>${safeContent}</li>`);
+      continue;
+    }
+
+    // ── Everything else → paragraph
+    closeList();
+    currentTarget.push(`<p class="para">${safeContent}</p>`);
   }
 
-  closeListIfOpen();
-  pushCurrentDaySection();
+  closeList(); pushDay();
 
   const blocks: string[] = [];
-  if (introParts.length > 0) {
+  if (introParts.length > 0)
     blocks.push(`<section class="page-block intro-block">${introParts.join('\n')}</section>`);
-  }
   blocks.push(...daySections);
-  if (summaryParts.length > 0) {
+  if (summaryParts.length > 0)
     blocks.push(`<section class="page-block summary-block">${summaryParts.join('\n')}</section>`);
-  }
   return blocks.join('\n');
 }
 
@@ -546,33 +571,83 @@ export async function POST(request: Request) {
       page-break-after: avoid;
     }
     .day-title {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 800;
-      margin: 20px 0 10px;
-      color: #0f172a;
+      margin: 0 0 20px;
+      padding: 14px 20px;
+      color: #fff;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      border-radius: 10px;
       page-break-after: avoid;
     }
-    .sub-title {
-      font-size: 16px;
+    /* Day section numbered highlight strip */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
       font-weight: 700;
-      margin: 14px 0 6px;
-      color: #1f2937;
+      margin: 22px 0 10px;
+      padding: 9px 14px;
+      color: #1e40af;
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       page-break-after: avoid;
+    }
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    /* Meal row: Breakfast / Lunch / Dinner / Snacks */
+    .meal-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 6px 0;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-left: 3px solid #93c5fd;
+      border-radius: 5px;
+    }
+    .meal-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1e40af;
+      min-width: 68px;
+      flex-shrink: 0;
+    }
+    .meal-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #374151;
     }
     .para {
       font-size: 13.5px;
-      line-height: 1.72;
+      line-height: 1.75;
       color: #374151;
       margin: 0 0 8px;
     }
     .list {
-      margin: 0 0 12px 20px;
+      margin: 4px 0 10px 20px;
+      padding: 0;
     }
     .list li {
-      font-size: 13.5px;
+      font-size: 13px;
       line-height: 1.68;
       color: #374151;
-      margin: 2px 0;
+      margin: 3px 0;
     }
   </style>
 </head>
@@ -596,7 +671,7 @@ export async function POST(request: Request) {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
 

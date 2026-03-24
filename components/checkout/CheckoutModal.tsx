@@ -1,56 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Flame, Lock, CreditCard } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { addMessage, setIsPaid, setStage, closeCheckoutModal } from '@/features/chatbot/chatbotSlice'
 
-async function downloadPersonalizedPdf(params: {
-  userName: string
-  planType: 'basic' | 'premium'
-  dailyCalories: number
-  goal: string
-  activity: string
-  weight: string
-  /** Paid basic: full 7-day section in PDF */
-  fullMealPlan?: boolean
-}) {
-  const res = await fetch('/api/generate-pdf', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      userName: params.userName,
-      planType: params.planType,
-      dailyCalories: params.dailyCalories,
-      goal: params.goal,
-      activity: params.activity,
-      weight: params.weight,
-      fullMealPlan: params.fullMealPlan ?? false,
-    }),
-  })
-  if (!res.ok) throw new Error('PDF generation failed')
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'FitlyAi-PersonalizedPlan.pdf'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
-
 export function CheckoutModal() {
   const dispatch = useAppDispatch()
-  const router = useRouter()
 
   const isOpen = useAppSelector((s) => s.chatbot.isCheckoutModalOpen)
   const user = useAppSelector((s) => s.auth.user)
-  const planType = useAppSelector((s) => s.chatbot.planType)
-  const userAnswers = useAppSelector((s) => s.chatbot.userAnswers)
-  const dailyCalories = useAppSelector((s) => s.chatbot.dailyCalories)
-  const PRICE = planType === 'basic' ? '$2.00' : '$9.00'
+  const PRICE = '$9.00'
 
   const [isProcessing, setIsProcessing] = useState(false)
   const [email, setEmail] = useState(user?.email || '')
@@ -61,42 +21,16 @@ export function CheckoutModal() {
     e.preventDefault()
     setIsProcessing(true)
 
-    const firstName = user?.name?.split(' ')[0] ?? 'Guest'
-    const userName = user?.name ?? firstName
-    const goal = userAnswers.goal ?? 'lose weight'
-    const activity = userAnswers.activity ?? 'active'
-    const weight = userAnswers.weight ?? '80 kg'
-    const cals = dailyCalories ?? 2000
-
     // Simulate payment processing time
     setTimeout(async () => {
       dispatch(setIsPaid(true))
       dispatch(closeCheckoutModal())
       dispatch(setStage('questioning'))
-      if (planType === 'premium') {
-        dispatch(addMessage({
-          role: 'assistant',
-          content: 'Payment successful. Premium access unlocked. You can start chatting now.',
-          type: 'text',
-        }))
-      }
-
-      if (planType === 'basic') {
-        try {
-          await downloadPersonalizedPdf({
-            userName,
-            planType: 'basic',
-            dailyCalories: cals,
-            goal,
-            activity,
-            weight,
-            fullMealPlan: true,
-          })
-        } catch (err) {
-          console.error(err)
-        }
-        router.push('/')
-      }
+      dispatch(addMessage({
+        role: 'assistant',
+        content: 'Payment successful. Premium access unlocked. You can start chatting now.',
+        type: 'text',
+      }))
 
       setIsProcessing(false)
     }, 2000)

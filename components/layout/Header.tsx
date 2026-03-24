@@ -5,9 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Flame, MessageCircle, ChevronDown } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { openModal, setPlanType, setStage, resetChat } from '@/features/chatbot/chatbotSlice'
+import { resetChat, setIsPaid, setPlanType, setStage } from '@/features/chatbot/chatbotSlice'
 import { logout } from '@/features/auth/authSlice'
-import { GetStartedModal } from '@/components/landing/GetStartedModal'
 import { useState } from 'react'
 
 // Static demo user name as requested
@@ -19,28 +18,19 @@ export function Header() {
   const pathname      = usePathname()
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated)
   const planType        = useAppSelector((s) => s.chatbot.planType)
-  const isPaid          = useAppSelector((s) => s.chatbot.isPaid)
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
 
   const isOnChatbot = pathname === '/chatbot'
-  const isOnBasicFunnel = pathname === '/basic-plan-funnel'
 
   function handleChatWithAI() {
-    if (planType === 'premium') {
-      router.push('/chatbot')
-      return
+    if (planType !== 'premium') {
+      dispatch(setPlanType('premium'))
+      dispatch(setStage('questioning'))
+      dispatch(setIsPaid(false))
     }
-    if (planType === 'basic' && !isPaid) {
-      router.push('/basic-plan-funnel')
-      return
-    }
-    if (planType === 'basic' && isPaid) {
-      router.push('/chatbot')
-      return
-    }
-    dispatch(openModal())
+    router.push('/chatbot')
   }
 
   function handleLogout() {
@@ -96,7 +86,7 @@ export function Header() {
             /* ── Authenticated state ── */
             <div className="flex items-center gap-3">
               {/* Chat with AI — hidden on the chatbot page itself */}
-              {!isOnChatbot && !isOnBasicFunnel && (
+              {!isOnChatbot && (
                 <Button
                   size="sm"
                   className="gap-2"
@@ -141,19 +131,16 @@ export function Header() {
           ) : (
             /* ── Guest state ── */
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
+              <Button className="cursor-pointer" variant="outline" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
                 {isGeneratingPdf ? 'Generating...' : 'Generate PDF'}
               </Button>
-              <Button onClick={() => dispatch(openModal())}>
+              <Button className="cursor-pointer" onClick={handleChatWithAI}>
                 Get Started
               </Button>
             </div>
           )}
         </div>
       </header>
-
-      {/* Modal rendered once at header level */}
-      <GetStartedModal />
     </>
   )
 }
