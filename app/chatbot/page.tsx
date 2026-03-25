@@ -15,7 +15,7 @@ import {
 import { loginSuccess } from '@/features/auth/authSlice'
 import { Header } from '@/components/layout/Header'
 import { CheckoutModal } from '@/components/checkout/CheckoutModal'
-import { Flame, ArrowLeft, Send, RefreshCw, CheckCircle2, Zap } from 'lucide-react'
+import { Flame, ArrowLeft, Send, RefreshCw, CheckCircle2, Zap, FileText, Download } from 'lucide-react'
 
 const CHATBOT_CONTEXT_STORAGE_KEY = 'chatbot-premium-context-v1'
 const CHATBOT_SESSION_STORAGE_KEY = 'chatbot-session-v1'
@@ -113,8 +113,16 @@ export default function ChatbotPage() {
   const isHardReloadRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef       = useRef<HTMLInputElement>(null)
+  // Stores the last generated plan text awaiting user approval before PDF download
+  const pendingPlanRef = useRef<string | null>(null)
 
   const requiresPremiumPayment = planType === 'premium' && !isPaid
+
+  // Detect whether the user's message is an approval to generate the PDF
+  const isApprovalMessage = (text: string): boolean => {
+    const t = text.toLowerCase().trim()
+    return /(yes|yep|yeah|ok|okay|looks?\s*good|perfect|great|approve|approved|generate|download|confirm|go ahead|proceed|do it|i(t)?'?s?\s*(good|fine|great|perfect|ok)|all good|no\s*(changes?|adjustments?)|looks?\s*(fine|great|perfect|awesome)|i('m| am)\s*(happy|satisfied|good)|send it|let'?s go|ready|finalize|save|done|agreed|good to go|let'?s\s*(do|go))/i.test(t)
+  }
 
   // Prepare plan text for PDF: strip preamble, preserve markdown structure
   const normalizePlanText = (raw: string): string => {
@@ -133,7 +141,7 @@ export default function ChatbotPage() {
     return normalized
   }
 
-  const downloadGeneratedPdf = useCallback(async (planText: string) => {
+  const downloadGeneratedPdf = useCallback(async (planText: string): Promise<string> => {
     const res = await fetch('/api/generate-pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -145,13 +153,15 @@ export default function ChatbotPage() {
     if (!res.ok) throw new Error('PDF generation failed')
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
+    // Trigger auto-download
     const a = document.createElement('a')
     a.href = url
     a.download = 'FitlyAi-PersonalizedPlan.pdf'
     document.body.appendChild(a)
     a.click()
     a.remove()
-    URL.revokeObjectURL(url)
+    // Return blob URL for in-chat display (don't revoke yet)
+    return url
   }, [user?.name])
 
   // Restore minimal session so reload keeps user on /chatbot.
@@ -306,7 +316,8 @@ export default function ChatbotPage() {
       setShowAuthModal(true)
       return
     }
-    if (requiresPremiumPayment) {
+    const priorUserMessageCount = messages.filter((m) => m.role === 'user').length
+    if (requiresPremiumPayment && priorUserMessageCount >= 1) {
       dispatch(openCheckoutModal())
       return
     }
@@ -314,6 +325,20 @@ export default function ChatbotPage() {
     dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
     setInputValue('')
     setIsTyping(true)
+
+    // ── APPROVAL SHORT-CIRCUIT: skip AI entirely, generate PDF immediately ──
+    if (pendingPlanRef.current && isApprovalMessage(text)) {
+      const planToExport = pendingPlanRef.current
+      pendingPlanRef.current = null
+      try {
+        const blobUrl = await downloadGeneratedPdf(planToExport)
+        dispatch(addMessage({ role: 'assistant', content: blobUrl, type: 'pdf' }))
+      } catch {
+        dispatch(addMessage({ role: 'assistant', content: "Couldn't generate the PDF. Please try again.", type: 'text' }))
+      }
+      setIsTyping(false)
+      return
+    }
 
     try {
       const history = messages
@@ -335,22 +360,15 @@ export default function ChatbotPage() {
           : "I couldn't generate a response. Please try again."
 
       dispatch(addMessage({ role: 'assistant', content: reply, type: 'text' }))
+
+      // If a full 7-day plan was generated, store it and ask for review
       if (isGeneratedPlan(reply)) {
-        try {
-          await downloadGeneratedPdf(reply)
-          dispatch(addMessage({
-            role: 'assistant',
-            content: 'Your PDF has been generated and downloaded successfully.',
-            type: 'text',
-          }))
-        } catch (error) {
-          console.error('Auto PDF generation failed:', error)
-          dispatch(addMessage({
-            role: 'assistant',
-            content: 'I generated your plan, but automatic PDF download failed. Please use the Generate PDF button in the header.',
-            type: 'text',
-          }))
-        }
+        pendingPlanRef.current = reply
+        dispatch(addMessage({
+          role: 'assistant',
+          content: '✅ Your plan is ready! Please take a moment to review it above. Let me know if you\'d like any adjustments — or if everything looks good, just say **"looks good"** and I\'ll generate your personalized PDF! 📄',
+          type: 'review-prompt',
+        }))
       }
     } catch {
       dispatch(addMessage({
@@ -362,6 +380,42 @@ export default function ChatbotPage() {
       setIsTyping(false)
     }
   }, [inputValue, stage, requiresPremiumPayment, dispatch, messages, downloadGeneratedPdf])
+
+  // Quick-reply helper: send a canned message without touching the input field
+  const sendQuickReply = useCallback(async (text: string) => {
+    if (!text.trim() || !isAuthenticated) return
+    dispatch(addMessage({ role: 'user', content: text, type: 'text' }))
+    setIsTyping(true)
+    try {
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }))
+      const response = await fetch('/api/create-skill/chatbot-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...history, { role: 'user', content: text }] }),
+      })
+      const data = await response.json()
+      const reply = typeof data?.reply === 'string' && data.reply.trim() ? data.reply.trim() : 'Something went wrong. Please try again.'
+      // If this was an approval, skip AI reply and go straight to PDF
+      if (pendingPlanRef.current && isApprovalMessage(text)) {
+        const planToExport = pendingPlanRef.current
+        pendingPlanRef.current = null
+        try {
+          const blobUrl = await downloadGeneratedPdf(planToExport)
+          dispatch(addMessage({ role: 'assistant', content: blobUrl, type: 'pdf' }))
+        } catch {
+          dispatch(addMessage({ role: 'assistant', content: 'PDF generation failed. Please try again.', type: 'text' }))
+        }
+      } else {
+        dispatch(addMessage({ role: 'assistant', content: reply, type: 'text' }))
+      }
+    } catch {
+      dispatch(addMessage({ role: 'assistant', content: 'Something went wrong. Please try again.', type: 'text' }))
+    } finally {
+      setIsTyping(false)
+    }
+  }, [isAuthenticated, dispatch, messages, downloadGeneratedPdf])
 
 
   const isInputDisabled = ['paywall', 'upgrade', 'processing'].includes(stage) || !isAuthenticated
@@ -475,14 +529,14 @@ export default function ChatbotPage() {
                         ))}
                       </ul>
                       <div className="mt-4 rounded-xl bg-primary/5 p-3 text-center">
-                        <p className="text-2xl font-extrabold text-foreground">9$ <span className="text-sm font-semibold">one-time</span></p>
+                        <p className="text-2xl font-extrabold text-foreground">3.99$ <span className="text-sm font-semibold">one-time</span></p>
                         <p className="text-xs text-muted-foreground">One-time · Instant access</p>
                       </div>
                       <button
                         onClick={() => dispatch(openModal())}
                         className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.98]"
                       >
-                        <Zap className="h-4 w-4" /> Unlock Full Plan (9$)
+                        <Zap className="h-4 w-4" /> Unlock Full Plan (3.99$)
                       </button>
                     </div>
                   </div>
@@ -496,14 +550,14 @@ export default function ChatbotPage() {
                     <div className="px-5 py-4">
                       <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{msg.content}</p>
                       <div className="mt-4 rounded-xl bg-primary/5 p-4 text-center">
-                        <p className="text-2xl font-extrabold text-foreground">9$ <span className="text-base font-semibold">one-time</span></p>
+                        <p className="text-2xl font-extrabold text-foreground">3.99$ <span className="text-base font-semibold">one-time</span></p>
                         <p className="mt-0.5 text-xs text-muted-foreground">One-time · Instant access</p>
                       </div>
                       <button
                         onClick={() => dispatch(openCheckoutModal())}
                         className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.98]"
                       >
-                        ⚡ Continue to Checkout (9$)
+                        ⚡ Continue to Checkout (3.99$)
                       </button>
                     </div>
                   </div>
@@ -535,6 +589,59 @@ export default function ChatbotPage() {
                           No thanks
                         </button>
                       </div>
+                    </div>
+                  </div>
+
+                /* ── REVIEW-PROMPT card ── */
+                ) : msg.type === 'review-prompt' ? (
+                  <div className="overflow-hidden rounded-2xl rounded-tl-sm border border-green-500/25 bg-card shadow-sm">
+                    <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-5 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-green-600">✅ Plan Generated</p>
+                    </div>
+                    <div className="px-5 py-4">
+                      <p className="text-sm leading-relaxed text-foreground">
+                        Please review your plan above. Would you like any adjustments, or is everything good?
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <button
+                          onClick={() => sendQuickReply('Looks good, generate my PDF!')}
+                          className="flex-1 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-semibold text-green-700 transition-colors hover:bg-green-500/20"
+                        >
+                          ✅ Looks good, generate PDF!
+                        </button>
+                        <button
+                          onClick={() => { setInputValue('I need some adjustments: '); inputRef.current?.focus() }}
+                          className="flex-1 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary"
+                        >
+                          ✏️ I need adjustments
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                /* ── PDF file card ── */
+                ) : msg.type === 'pdf' ? (
+                  <div className="overflow-hidden rounded-2xl rounded-tl-sm border border-blue-500/20 bg-card shadow-sm max-w-xs">
+                    <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 px-4 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">📄 Your Plan is Ready</p>
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
+                          <FileText className="h-6 w-6 text-red-500" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">FitlyAi-PersonalizedPlan.pdf</p>
+                          <p className="text-xs text-muted-foreground">PDF Document</p>
+                        </div>
+                      </div>
+                      <a
+                        href={msg.content}
+                        download="FitlyAi-PersonalizedPlan.pdf"
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-all hover:brightness-110 active:scale-[0.98]"
+                      >
+                        <Download className="h-4 w-4" /> Download PDF
+                      </a>
                     </div>
                   </div>
 

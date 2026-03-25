@@ -7,7 +7,7 @@ import { loginSuccess } from '@/features/auth/authSlice'
 import { Sparkles, X, Check, Zap, Lock } from 'lucide-react'
 import { useState } from 'react'
 
-const PRICE = '9$'
+const PRICE = '3.99$'
 const CHATBOT_SESSION_STORAGE_KEY = 'chatbot-session-v1'
 
 const PREMIUM_FEATURES = [

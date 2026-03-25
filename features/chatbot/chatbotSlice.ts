@@ -8,7 +8,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
-  type?: 'text' | 'plan' | 'paywall' | 'upgrade' | 'upsell'
+  type?: 'text' | 'plan' | 'paywall' | 'upgrade' | 'upsell' | 'pdf' | 'review-prompt'
 }
 
 export interface UserAnswers {
