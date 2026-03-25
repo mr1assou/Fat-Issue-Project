@@ -352,11 +352,20 @@ function escapeHtml(input: string) {
 
 // Known day sub-section labels — match regardless of bullet/number prefix
 const SECTION_NAME_RE = /^(Daily Objective|Full Meal Plan|Daily Routine|Physical Activity(\s*\(Daily\))?|Daily Tips|Explanation)$/i;
+// Known sub-headings inside sections (routine times + meal labels when standalone)
+const SUB_HEADING_RE = /^(Morning( routine)?|Midday|Evening|Night|Breakfast|Lunch|Dinner|Snacks?)$/i;
 // Meal lines that start with Breakfast:/Lunch:/Dinner:/Snacks:
 const MEAL_LINE_RE = /^(Breakfast|Lunch|Dinner|Snacks?):\s*(.*)/i;
-// Strip any leading bullets, markdown #, or numbers from a line
+// Strip any leading bullets, markdown #, numbers, and bold/italic markers from a line
 function stripMarkers(line: string): string {
-  return line
+  // First strip inline markdown formatting (**bold**, *italic*, __bold__)
+  const clean = line
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1');
+
+  // Then strip leading block markers
+  return clean
     .replace(/^[#]+\s*/, '')      // ## ### headings
     .replace(/^[•\-*]+\s*/, '')   // bullets • - *
     .replace(/^\d+\.\s*/, '')     // numbered: 1.
@@ -449,6 +458,13 @@ function formatPlanToHtml(planText: string) {
       currentTarget.push(
         `<div class="meal-row"><span class="meal-label">${label}</span><span class="meal-text">${text}</span></div>`
       );
+      continue;
+    }
+
+    // ── Known sub-headings (Morning, Midday, Evening, Night, standalone meal names)
+    if (SUB_HEADING_RE.test(content)) {
+      closeList();
+      currentTarget.push(`<h3 class="sub-heading">${safeContent}</h3>`);
       continue;
     }
 
@@ -551,13 +567,13 @@ export async function POST(request: Request) {
       padding: 0;
     }
     .page-block {
-      page-break-before: always;
+      margin-bottom: 30px;
     }
     .day-block {
-      break-after: page;  /* force each day to fill exactly one page */
+      /* content flows naturally, no forced page break */
     }
     .intro-block {
-      page-break-before: auto;
+      /* no forced break */
     }
     .section-title {
       font-size: 22px;
@@ -578,6 +594,8 @@ export async function POST(request: Request) {
       background: linear-gradient(135deg, #1e3a8a, #2563eb);
       border-radius: 10px;
       page-break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     /* Day section numbered highlight strip */
     .section-heading {
@@ -595,6 +613,8 @@ export async function POST(request: Request) {
       text-transform: uppercase;
       letter-spacing: 0.5px;
       page-break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .section-num {
       display: inline-flex;
@@ -619,6 +639,8 @@ export async function POST(request: Request) {
       background: #f8fafc;
       border-left: 3px solid #93c5fd;
       border-radius: 6px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .meal-label {
       font-size: 13.5px;
@@ -647,6 +669,20 @@ export async function POST(request: Request) {
       line-height: 1.65;
       color: #374151;
       margin: 4px 0;
+    }
+    /* Sub-headings: Morning, Midday, Evening, Night, standalone meal names */
+    .sub-heading {
+      font-size: 13.5px;
+      font-weight: 700;
+      margin: 14px 0 4px;
+      padding: 6px 12px;
+      color: #1e3a8a;
+      background: #f0f4ff;
+      border-left: 3px solid #60a5fa;
+      border-radius: 4px;
+      page-break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
   </style>
 </head>
